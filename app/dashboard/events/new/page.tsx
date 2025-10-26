@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,8 +11,10 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { MessageSquare, ArrowLeft } from 'lucide-react'
+import { UserMenu } from '@/components/layout/user-menu'
 
 export default function NewEventPage() {
+  const { data: session } = useSession()
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [allowAnonymous, setAllowAnonymous] = useState(true)
@@ -76,9 +79,12 @@ export default function NewEventPage() {
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">QnALive</span>
           </Link>
-          <Link href="/dashboard">
-            <Button>Dashboard</Button>
-          </Link>
+          <nav className="flex items-center space-x-4">
+            <UserMenu userName={session?.user?.name} userEmail={session?.user?.email} />
+            <Link href="/dashboard">
+              <Button>Dashboard</Button>
+            </Link>
+          </nav>
         </div>
       </header>
 

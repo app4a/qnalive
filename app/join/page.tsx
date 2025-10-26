@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,8 +11,10 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { getSessionId } from '@/lib/utils'
 import { MessageSquare } from 'lucide-react'
+import { UserMenu } from '@/components/layout/user-menu'
 
 export default function JoinEventPage() {
+  const { data: session } = useSession()
   const [eventCode, setEventCode] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -78,9 +81,25 @@ export default function JoinEventPage() {
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">QnALive</span>
           </Link>
-          <Link href="/auth/signin">
-            <Button variant="ghost">Sign In</Button>
-          </Link>
+          <nav className="flex items-center space-x-4">
+            {session?.user ? (
+              <>
+                <UserMenu userName={session.user.name} userEmail={session.user.email} />
+                <Link href="/dashboard">
+                  <Button>Dashboard</Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/signin">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button>Get Started</Button>
+                </Link>
+              </>
+            )}
+          </nav>
         </div>
       </header>
 
