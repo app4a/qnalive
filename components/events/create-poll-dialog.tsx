@@ -62,7 +62,16 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Please enter a poll title',
+        description: 'Please enter a poll question',
+      })
+      return
+    }
+
+    if (title.trim().length < 5) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Poll question must be at least 5 characters',
       })
       return
     }
@@ -99,7 +108,14 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to create poll')
+        // Format detailed validation errors if available
+        if (data.details && Array.isArray(data.details)) {
+          const errorMessages = data.details.map((err: any) => 
+            `${err.path?.join('.') || 'Field'}: ${err.message}`
+          ).join('\n')
+          throw new Error(errorMessages)
+        }
+        throw new Error(data.error || data.message || 'Failed to create poll')
       }
 
       toast({
@@ -111,7 +127,7 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
       setTitle('')
       setType('MULTIPLE_CHOICE')
       setOptions(['', ''])
-      router.refresh()
+      // Poll will appear via Socket.io event - no need to refresh
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -149,9 +165,13 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
                 placeholder="What's your question?"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
+                minLength={5}
                 maxLength={255}
                 required
               />
+              <p className="text-xs text-gray-500">
+                Poll question must be between 5 and 255 characters
+              </p>
             </div>
 
             {/* Poll Type */}
@@ -181,6 +201,7 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
                         value={option}
                         onChange={(e) => handleOptionChange(index, e.target.value)}
                         maxLength={100}
+                        minLength={1}
                       />
                       {options.length > 2 && (
                         <Button
@@ -207,6 +228,9 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
                     Add Option
                   </Button>
                 )}
+                <p className="text-xs text-gray-500">
+                  Add at least 2 options (up to 10 options)
+                </p>
               </div>
             )}
 

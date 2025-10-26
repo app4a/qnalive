@@ -205,6 +205,20 @@ export async function PUT(
       }
     }
 
+    // Emit Socket.io event for event settings updates
+    try {
+      const { getIO } = await import('@/lib/socket')
+      const io = getIO()
+      if (io) {
+        console.log(`Emitting event:updated for event ${params.eventId}`)
+        io.to(params.eventId).emit('event:updated', { 
+          event: updatedEvent 
+        })
+      }
+    } catch (error) {
+      console.error('Failed to emit event:updated socket event:', error)
+    }
+
     // Return updated event with info about auto-approved questions
     const response: any = { ...updatedEvent }
     if (moderationBeingDisabled && pendingQuestions && pendingQuestions.length > 0) {

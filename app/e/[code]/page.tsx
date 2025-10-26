@@ -44,6 +44,7 @@ interface Poll {
   type: string
   isActive: boolean
   options: PollOption[]
+  userVote?: string | null
 }
 
 interface PollOption {
@@ -58,6 +59,7 @@ export default function ParticipantViewPage() {
   const [event, setEvent] = useState<any>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [polls, setPolls] = useState<Poll[]>([])
+  const [userVotes, setUserVotes] = useState<Map<string, string>>(new Map()) // pollId -> optionId
   const [participantCount, setParticipantCount] = useState(0)
   const [newQuestion, setNewQuestion] = useState('')
   const [authorName, setAuthorName] = useState('')
@@ -97,10 +99,19 @@ export default function ParticipantViewPage() {
         const questionsData = await questionsRes.json()
         setQuestions(questionsData)
 
-        // Fetch polls
-        const pollsRes = await fetch(`/api/events/${data.id}/polls?activeOnly=true`)
+        // Fetch polls (include sessionId to get user's votes)
+        const pollsRes = await fetch(`/api/events/${data.id}/polls?activeOnly=true&sessionId=${sessionId}`)
         const pollsData = await pollsRes.json()
         setPolls(pollsData)
+        
+        // Initialize userVotes from the fetched data
+        const votes = new Map<string, string>()
+        pollsData.forEach((poll: any) => {
+          if (poll.userVote) {
+            votes.set(poll.id, poll.userVote)
+          }
+        })
+        setUserVotes(votes)
 
         // Set up WebSocket
         socketInstance = getSocket()
@@ -214,13 +225,46 @@ export default function ParticipantViewPage() {
         }
 
         const handlePollNew = (data: any) => {
+          console.log('[Participant] Received poll:new event:', data.poll.id, 'isActive:', data.poll.isActive)
           setPolls(prev => {
             // Check if poll already exists to prevent duplicates
             if (prev.some(p => p.id === data.poll.id)) {
+              console.log('[Participant] Poll already exists, ignoring')
               return prev
             }
-            return [data.poll, ...prev]
+            // Only add active polls for participants
+            if (data.poll.isActive) {
+              console.log('[Participant] Adding active poll')
+              return [data.poll, ...prev]
+            }
+            console.log('[Participant] Poll is inactive, not adding')
+            return prev
           })
+        }
+
+        const handlePollUpdated = (data: any) => {
+          console.log('[Participant] Received poll:updated event:', data.poll.id, 'isActive:', data.poll.isActive)
+          setPolls(prev => {
+            // If poll became inactive, remove it from participant view
+            if (!data.poll.isActive) {
+              console.log('[Participant] Poll became inactive, removing from view')
+              return prev.filter(p => p.id !== data.poll.id)
+            }
+            // If poll became active, add it if not already present
+            const exists = prev.some(p => p.id === data.poll.id)
+            if (exists) {
+              console.log('[Participant] Updating existing poll')
+              return prev.map(p => p.id === data.poll.id ? data.poll : p)
+            } else {
+              console.log('[Participant] Poll became active, adding to view')
+              return [data.poll, ...prev]
+            }
+          })
+        }
+
+        const handlePollDeleted = (data: any) => {
+          console.log('[Participant] Received poll:deleted event:', data.pollId)
+          setPolls(prev => prev.filter(p => p.id !== data.pollId))
         }
 
         const handlePollVoted = (data: any) => {
@@ -241,13 +285,21 @@ export default function ParticipantViewPage() {
           setParticipantCount(data.count)
         }
 
+        const handleEventUpdated = (data: any) => {
+          console.log('[Participant] Received event:updated event')
+          setEvent(data.event)
+        }
+
         socketInstance.on('question:new', handleQuestionNew)
         socketInstance.on('question:upvoted', handleQuestionUpvoted)
         socketInstance.on('question:updated', handleQuestionUpdated)
         socketInstance.on('question:deleted', handleQuestionDeleted)
         socketInstance.on('poll:new', handlePollNew)
+        socketInstance.on('poll:updated', handlePollUpdated)
+        socketInstance.on('poll:deleted', handlePollDeleted)
         socketInstance.on('poll:voted', handlePollVoted)
         socketInstance.on('event:participants', handleParticipants)
+        socketInstance.on('event:updated', handleEventUpdated)
 
         setLoading(false)
       } catch (error) {
@@ -270,8 +322,11 @@ export default function ParticipantViewPage() {
         socketInstance.off('question:updated')
         socketInstance.off('question:deleted')
         socketInstance.off('poll:new')
+        socketInstance.off('poll:updated')
+        socketInstance.off('poll:deleted')
         socketInstance.off('poll:voted')
         socketInstance.off('event:participants')
+        socketInstance.off('event:updated')
         socketInstance.disconnect()
       }
     }
@@ -428,21 +483,58 @@ export default function ParticipantViewPage() {
 
   const handleVote = async (pollId: string, optionId: string) => {
     try {
-      const response = await fetch(`/api/events/${event.id}/polls/${pollId}/vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ optionId, sessionId: getSessionId() }),
-      })
+      const currentVote = userVotes.get(pollId)
+      
+      // If clicking the same option, unvote
+      if (currentVote === optionId) {
+        const response = await fetch(
+          `/api/events/${event.id}/polls/${pollId}/vote?optionId=${optionId}&sessionId=${getSessionId()}`,
+          {
+            method: 'DELETE',
+          }
+        )
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.error)
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error)
+        }
+
+        // Update local state
+        setUserVotes(prev => {
+          const newVotes = new Map(prev)
+          newVotes.delete(pollId)
+          return newVotes
+        })
+
+        toast({
+          title: 'Vote removed',
+          description: 'Your vote has been removed',
+        })
+      } else {
+        // Vote for this option
+        const response = await fetch(`/api/events/${event.id}/polls/${pollId}/vote`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ optionId, sessionId: getSessionId() }),
+        })
+
+        if (!response.ok) {
+          const data = await response.json()
+          throw new Error(data.error)
+        }
+
+        // Update local state
+        setUserVotes(prev => {
+          const newVotes = new Map(prev)
+          newVotes.set(pollId, optionId)
+          return newVotes
+        })
+
+        toast({
+          title: 'Vote submitted',
+          description: 'Your vote has been recorded',
+        })
       }
-
-      toast({
-        title: 'Success',
-        description: 'Vote submitted successfully',
-      })
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -577,40 +669,86 @@ export default function ParticipantViewPage() {
               <BarChart3 className="h-5 w-5 mr-2" />
               Active Polls
             </h2>
-            {polls.map((poll) => (
-              <Card key={poll.id}>
-                <CardHeader>
-                  <CardTitle>{poll.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    {poll.options.map((option) => {
-                      const totalVotes = poll.options.reduce((sum, o) => sum + o.votesCount, 0)
-                      const percentage = totalVotes > 0 ? (option.votesCount / totalVotes) * 100 : 0
+            {polls.map((poll) => {
+              const userVotedOptionId = userVotes.get(poll.id)
+              const showResultsImmediately = event?.settings?.showResultsImmediately !== false
+              const showResults = showResultsImmediately || userVotedOptionId
+              
+              return (
+                <Card key={poll.id}>
+                  <CardHeader>
+                    <CardTitle>{poll.title}</CardTitle>
+                    <CardDescription>
+                      {userVotedOptionId 
+                        ? 'Click your vote to remove it' 
+                        : showResults 
+                          ? 'Select an option to vote'
+                          : 'Vote to see results'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {poll.options.map((option) => {
+                        const totalVotes = poll.options.reduce((sum, o) => sum + o.votesCount, 0)
+                        const percentage = totalVotes > 0 ? (option.votesCount / totalVotes) * 100 : 0
+                        const isVoted = userVotedOptionId === option.id
 
-                      return (
-                        <div key={option.id}>
-                          <Button
-                            variant="outline"
-                            className="w-full justify-between"
-                            onClick={() => handleVote(poll.id, option.id)}
-                          >
-                            <span>{option.optionText}</span>
-                            <span className="font-mono">{option.votesCount}</span>
-                          </Button>
-                          <div className="h-2 bg-gray-200 rounded-full mt-1">
-                            <div
-                              className="h-full bg-primary rounded-full transition-all"
-                              style={{ width: `${percentage}%` }}
-                            />
+                        return (
+                          <div key={option.id}>
+                            <Button
+                              variant={isVoted ? "default" : "outline"}
+                              className={`w-full justify-between ${
+                                isVoted ? 'bg-primary text-primary-foreground' : ''
+                              }`}
+                              onClick={() => handleVote(poll.id, option.id)}
+                            >
+                              <span className="flex items-center gap-2">
+                                {isVoted && (
+                                  <svg
+                                    className="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                )}
+                                {option.optionText}
+                              </span>
+                              {showResults && (
+                                <span className="font-mono">
+                                  {option.votesCount} ({percentage.toFixed(0)}%)
+                                </span>
+                              )}
+                            </Button>
+                            {showResults && (
+                              <div className="h-2 bg-gray-200 rounded-full mt-1">
+                                <div
+                                  className={`h-full rounded-full transition-all ${
+                                    isVoted ? 'bg-primary' : 'bg-gray-400'
+                                  }`}
+                                  style={{ width: `${percentage}%` }}
+                                />
+                              </div>
+                            )}
                           </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                        )
+                      })}
+                    </div>
+                    {!showResults && (
+                      <p className="text-xs text-center text-gray-500 mt-4">
+                        Results will be visible after you vote
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
 

@@ -74,8 +74,24 @@ export async function POST(
         createdBy: {
           select: { id: true, name: true, image: true },
         },
+        _count: {
+          select: { votes: true },
+        },
       },
     })
+
+    // Emit Socket.io event for real-time updates
+    try {
+      const { getIO } = await import('@/lib/socket')
+      const io = getIO()
+      if (io) {
+        console.log(`Emitting poll:new event for poll ${poll.id} to event room ${params.eventId}`)
+        io.to(params.eventId).emit('poll:new', { poll })
+      }
+    } catch (error) {
+      console.error('Failed to emit socket event:', error)
+      // Continue anyway - poll was saved
+    }
 
     return NextResponse.json(poll, { status: 201 })
   } catch (error) {
@@ -100,8 +116,11 @@ export async function GET(
   { params }: { params: { eventId: string } }
 ) {
   try {
+    const session = await auth()
     const { searchParams } = new URL(req.url)
     const activeOnly = searchParams.get('activeOnly') === 'true'
+    const sessionId = searchParams.get('sessionId')
+    const userId = session?.user?.id
 
     const where: any = {
       eventId: params.eventId,
@@ -128,6 +147,28 @@ export async function GET(
         createdAt: 'desc',
       },
     })
+
+    // If user is authenticated or has sessionId, include their votes
+    if (userId || sessionId) {
+      const userVotes = await prisma.pollVote.findMany({
+        where: {
+          pollId: { in: polls.map(p => p.id) },
+          ...(userId ? { userId } : { sessionId }),
+        },
+        select: {
+          pollId: true,
+          optionId: true,
+        },
+      })
+
+      // Add userVote field to polls
+      const pollsWithUserVotes = polls.map(poll => ({
+        ...poll,
+        userVote: userVotes.find(v => v.pollId === poll.id)?.optionId || null,
+      }))
+
+      return NextResponse.json(pollsWithUserVotes)
+    }
 
     return NextResponse.json(polls)
   } catch (error) {

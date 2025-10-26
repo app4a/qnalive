@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/alert-dialog'
 import { BarChart3, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { getSocket } from '@/lib/socket-client'
+import type { Socket } from 'socket.io-client'
 
 interface PollOption {
   id: string
@@ -47,8 +49,68 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [pollToDelete, setPollToDelete] = useState<string | null>(null)
+  const [socket, setSocket] = useState<Socket | null>(null)
   const router = useRouter()
   const { toast } = useToast()
+
+  // Set up Socket.io for real-time updates
+  useEffect(() => {
+    const socketInstance = getSocket()
+    setSocket(socketInstance)
+
+    // Join event room (admin context)
+    socketInstance.emit('event:join', { eventId, sessionId: 'admin' })
+
+    // Listen for poll events
+    const handlePollNew = (data: any) => {
+      console.log('[Admin] Received poll:new event:', data.poll.id)
+      setPolls(prev => {
+        const exists = prev.some(p => p.id === data.poll.id)
+        if (exists) return prev
+        return [data.poll, ...prev]
+      })
+    }
+
+    const handlePollUpdated = (data: any) => {
+      console.log('[Admin] Received poll:updated event:', data.poll.id)
+      setPolls(prev => prev.map(p => 
+        p.id === data.poll.id ? data.poll : p
+      ))
+    }
+
+    const handlePollDeleted = (data: any) => {
+      console.log('[Admin] Received poll:deleted event:', data.pollId)
+      setPolls(prev => prev.filter(p => p.id !== data.pollId))
+    }
+
+    const handlePollVoted = (data: any) => {
+      console.log('[Admin] Received poll:voted event:', data.pollId, data.optionId, data.votesCount)
+      setPolls(prev => prev.map(p => {
+        if (p.id === data.pollId) {
+          return {
+            ...p,
+            options: p.options.map(o =>
+              o.id === data.optionId ? { ...o, votesCount: data.votesCount } : o
+            )
+          }
+        }
+        return p
+      }))
+    }
+
+    socketInstance.on('poll:new', handlePollNew)
+    socketInstance.on('poll:updated', handlePollUpdated)
+    socketInstance.on('poll:deleted', handlePollDeleted)
+    socketInstance.on('poll:voted', handlePollVoted)
+
+    return () => {
+      socketInstance.off('poll:new')
+      socketInstance.off('poll:updated')
+      socketInstance.off('poll:deleted')
+      socketInstance.off('poll:voted')
+      socketInstance.emit('event:leave', { eventId })
+    }
+  }, [eventId])
 
   const handleToggleActive = async (pollId: string, isActive: boolean) => {
     try {
@@ -68,8 +130,6 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
         title: 'Poll updated',
         description: `Poll ${!isActive ? 'activated' : 'deactivated'}`,
       })
-
-      router.refresh()
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -101,8 +161,6 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
         title: 'Poll deleted',
         description: 'Poll has been permanently deleted',
       })
-
-      router.refresh()
     } catch (error: any) {
       toast({
         variant: 'destructive',
