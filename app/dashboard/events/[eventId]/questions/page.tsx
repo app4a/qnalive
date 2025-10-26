@@ -69,7 +69,12 @@ export default async function ManageQuestionsPage({ params }: { params: { eventI
                 <p className="text-sm text-gray-600">{event.title}</p>
               </div>
             </div>
-            <UserMenu userName={session.user.name} userEmail={session.user.email} />
+            <nav className="flex items-center space-x-4">
+              <UserMenu userName={session.user.name} userEmail={session.user.email} />
+              <Link href="/dashboard">
+                <Button>Dashboard</Button>
+              </Link>
+            </nav>
           </div>
         </div>
       </header>

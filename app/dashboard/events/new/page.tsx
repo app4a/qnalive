@@ -76,6 +76,9 @@ export default function NewEventPage() {
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">QnALive</span>
           </Link>
+          <Link href="/dashboard">
+            <Button>Dashboard</Button>
+          </Link>
         </div>
       </header>
 

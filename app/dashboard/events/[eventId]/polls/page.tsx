@@ -72,10 +72,13 @@ export default async function ManagePollsPage({ params }: { params: { eventId: s
                 <p className="text-sm text-gray-600">{event.title}</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
+            <nav className="flex items-center space-x-4">
               <UserMenu userName={session.user.name} userEmail={session.user.email} />
+              <Link href="/dashboard">
+                <Button>Dashboard</Button>
+              </Link>
               <CreatePollDialog eventId={params.eventId} />
-            </div>
+            </nav>
           </div>
         </div>
       </header>

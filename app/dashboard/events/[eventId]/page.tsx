@@ -64,7 +64,12 @@ export default async function EventAdminPage({ params }: { params: { eventId: st
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">QnALive</span>
           </Link>
-          <UserMenu userName={session.user.name} userEmail={session.user.email} />
+          <nav className="flex items-center space-x-4">
+            <UserMenu userName={session.user.name} userEmail={session.user.email} />
+            <Link href="/dashboard">
+              <Button>Dashboard</Button>
+            </Link>
+          </nav>
         </div>
       </header>
 
