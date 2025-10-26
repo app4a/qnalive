@@ -1,0 +1,231 @@
+// schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User authentication and profile
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  passwordHash  String?
+  
+  // OAuth fields
+  accounts      Account[]
+  sessions      Session[]
+  
+  // User relationships
+  events        Event[]
+  questions     Question[]
+  questionUpvotes QuestionUpvote[]
+  polls         Poll[]
+  pollVotes     PollVote[]
+  eventParticipations EventParticipant[]
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([email])
+}
+
+// NextAuth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+}
+
+// Main event/presentation entity
+model Event {
+  id          String   @id @default(cuid())
+  ownerId     String
+  title       String   @db.VarChar(255)
+  description String?  @db.Text
+  eventCode   String   @unique @db.VarChar(10)
+  
+  startTime   DateTime?
+  endTime     DateTime?
+  isActive    Boolean  @default(true)
+  
+  // Settings stored as JSON
+  settings    Json     @default("{}")
+  
+  // Relationships
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  questions   Question[]
+  polls       Poll[]
+  participants EventParticipant[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([eventCode])
+  @@index([ownerId])
+  @@index([isActive])
+}
+
+// Q&A Questions
+model Question {
+  id          String   @id @default(cuid())
+  eventId     String
+  authorId    String?
+  authorName  String?  @db.VarChar(100)
+  content     String   @db.Text
+  
+  upvotesCount Int     @default(0)
+  isAnswered   Boolean @default(false)
+  isArchived   Boolean @default(false)
+  status       QuestionStatus @default(APPROVED)
+  
+  // Relationships
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  upvotes     QuestionUpvote[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([eventId, createdAt(sort: Desc)])
+  @@index([eventId, upvotesCount(sort: Desc)])
+  @@index([eventId, status])
+}
+
+enum QuestionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Question upvotes tracking
+model QuestionUpvote {
+  id          String   @id @default(cuid())
+  questionId  String
+  userId      String?
+  sessionId   String?  @db.VarChar(255)
+  
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  
+  @@unique([questionId, userId])
+  @@unique([questionId, sessionId])
+  @@index([questionId])
+}
+
+// Live polls
+model Poll {
+  id          String   @id @default(cuid())
+  eventId     String
+  createdById String
+  title       String   @db.VarChar(255)
+  type        PollType @default(MULTIPLE_CHOICE)
+  
+  isActive    Boolean  @default(true)
+  allowMultipleVotes Boolean @default(false)
+  settings    Json     @default("{}")
+  
+  // Relationships
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdBy   User     @relation(fields: [createdById], references: [id])
+  options     PollOption[]
+  votes       PollVote[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([eventId])
+  @@index([eventId, isActive])
+}
+
+enum PollType {
+  MULTIPLE_CHOICE
+  YES_NO
+  RATING
+  WORD_CLOUD
+}
+
+// Poll answer options
+model PollOption {
+  id          String   @id @default(cuid())
+  pollId      String
+  optionText  String   @db.VarChar(255)
+  displayOrder Int
+  votesCount  Int      @default(0)
+  
+  poll        Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  votes       PollVote[]
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([pollId, displayOrder])
+}
+
+// Poll votes tracking
+model PollVote {
+  id          String   @id @default(cuid())
+  pollId      String
+  optionId    String
+  userId      String?
+  sessionId   String?  @db.VarChar(255)
+  
+  poll        Poll     @relation(fields: [pollId], references: [id], onDelete: Cascade)
+  option      PollOption @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt   DateTime @default(now())
+  
+  @@index([pollId])
+  @@index([optionId])
+}
+
+// Event participants tracking
+model EventParticipant {
+  id          String   @id @default(cuid())
+  eventId     String
+  userId      String?
+  sessionId   String?  @db.VarChar(255)
+  
+  joinedAt    DateTime @default(now())
+  lastActive  DateTime @default(now())
+  
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([eventId, userId])
+  @@unique([eventId, sessionId])
+  @@index([eventId])
+}
+
