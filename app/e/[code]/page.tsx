@@ -23,6 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { UserMenu } from '@/components/layout/user-menu'
+import { ParticipantCreatePollDialog } from '@/components/events/participant-create-poll-dialog'
 
 interface Question {
   id: string
@@ -45,6 +46,11 @@ interface Poll {
   isActive: boolean
   options: PollOption[]
   userVote?: string | null
+  createdBy?: {
+    id: string
+    name: string | null
+    image: string | null
+  }
 }
 
 interface PollOption {
@@ -73,6 +79,7 @@ export default function ParticipantViewPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null)
+  const [createPollDialogOpen, setCreatePollDialogOpen] = useState(false)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -100,9 +107,17 @@ export default function ParticipantViewPage() {
         setQuestions(questionsData)
 
         // Fetch polls (include sessionId to get user's votes)
-        const pollsRes = await fetch(`/api/events/${data.id}/polls?activeOnly=true&sessionId=${sessionId}`)
+        // Don't filter activeOnly - we'll filter on client to show creator's pending polls
+        const pollsRes = await fetch(`/api/events/${data.id}/polls?sessionId=${sessionId}`)
         const pollsData = await pollsRes.json()
-        setPolls(pollsData)
+        
+        // Filter polls: show active polls to everyone, show inactive polls to their creators
+        const filteredPolls = pollsData.filter((poll: any) => {
+          if (poll.isActive) return true // Show all active polls
+          // Show inactive polls only if current user is the creator
+          return poll.createdBy?.id === userIdForSocket
+        })
+        setPolls(filteredPolls)
         
         // Initialize userVotes from the fetched data
         const votes = new Map<string, string>()
@@ -119,7 +134,7 @@ export default function ParticipantViewPage() {
         
         // Get user ID if authenticated, otherwise use session ID
         const sessionIdForSocket = getSessionId()
-        let userIdForSocket = null
+        let userIdForSocket: string | null = null
         try {
           const sessionResponse = await fetch('/api/auth/session')
           const sessionData = await sessionResponse.json()
@@ -225,33 +240,51 @@ export default function ParticipantViewPage() {
         }
 
         const handlePollNew = (data: any) => {
-          console.log('[Participant] Received poll:new event:', data.poll.id, 'isActive:', data.poll.isActive)
+          console.log('[Participant] Received poll:new event:', data.poll.id, 'isActive:', data.poll.isActive, 'createdBy:', data.poll.createdBy?.id)
           setPolls(prev => {
             // Check if poll already exists to prevent duplicates
             if (prev.some(p => p.id === data.poll.id)) {
               console.log('[Participant] Poll already exists, ignoring')
               return prev
             }
-            // Only add active polls for participants
+            
+            // Show active polls to everyone
             if (data.poll.isActive) {
               console.log('[Participant] Adding active poll')
               return [data.poll, ...prev]
             }
-            console.log('[Participant] Poll is inactive, not adding')
+            
+            // Show inactive polls to their creators
+            const isCreator = data.poll.createdBy?.id === userIdForSocket
+            if (isCreator) {
+              console.log('[Participant] Adding inactive poll (user is creator)')
+              return [data.poll, ...prev]
+            }
+            
+            console.log('[Participant] Poll is inactive and user is not creator, not adding')
             return prev
           })
         }
 
         const handlePollUpdated = (data: any) => {
-          console.log('[Participant] Received poll:updated event:', data.poll.id, 'isActive:', data.poll.isActive)
+          console.log('[Participant] Received poll:updated event:', data.poll.id, 'isActive:', data.poll.isActive, 'createdBy:', data.poll.createdBy?.id)
           setPolls(prev => {
-            // If poll became inactive, remove it from participant view
-            if (!data.poll.isActive) {
-              console.log('[Participant] Poll became inactive, removing from view')
-              return prev.filter(p => p.id !== data.poll.id)
-            }
-            // If poll became active, add it if not already present
             const exists = prev.some(p => p.id === data.poll.id)
+            const isCreator = data.poll.createdBy?.id === userIdForSocket
+            
+            // If poll became inactive
+            if (!data.poll.isActive) {
+              // Keep it if user is the creator, otherwise remove it
+              if (isCreator) {
+                console.log('[Participant] Poll became inactive but user is creator, keeping it')
+                return prev.map(p => p.id === data.poll.id ? data.poll : p)
+              } else {
+                console.log('[Participant] Poll became inactive, removing from view')
+                return prev.filter(p => p.id !== data.poll.id)
+              }
+            }
+            
+            // Poll is active
             if (exists) {
               console.log('[Participant] Updating existing poll')
               return prev.map(p => p.id === data.poll.id ? data.poll : p)
@@ -343,7 +376,9 @@ export default function ParticipantViewPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: newQuestion,
-          authorName: authorName || 'Anonymous',
+          // Only send authorName if user is not logged in
+          // If logged in, let the API use the session user's name
+          authorName: currentUserId ? undefined : (authorName || undefined),
           sessionId: getSessionId(),
         }),
       })
@@ -453,7 +488,13 @@ export default function ParticipantViewPage() {
 
     setDeletingId(questionToDelete)
     try {
-      const response = await fetch(`/api/events/${event.id}/questions/${questionToDelete}`, {
+      // Include sessionId for anonymous users
+      const url = new URL(`/api/events/${event.id}/questions/${questionToDelete}`, window.location.origin)
+      if (!currentUserId) {
+        url.searchParams.set('sessionId', getSessionId())
+      }
+      
+      const response = await fetch(url.toString(), {
         method: 'DELETE',
       })
 
@@ -663,28 +704,100 @@ export default function ParticipantViewPage() {
         </Card>
 
         {/* Active Polls */}
-        {polls.length > 0 && (
+        {(polls.length > 0 || event?.settings?.allowParticipantPolls) && (
           <div className="mb-6 space-y-4">
-            <h2 className="text-xl font-bold flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              Active Polls
-            </h2>
-            {polls.map((poll) => {
+            <div className="flex items-center justify-between">
+              <h2 className="text-xl font-bold flex items-center">
+                <BarChart3 className="h-5 w-5 mr-2" />
+                Active Polls
+              </h2>
+              {event?.settings?.allowParticipantPolls && currentUserId && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCreatePollDialogOpen(true)}
+                >
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Create Poll
+                </Button>
+              )}
+            </div>
+            {polls.length === 0 && event?.settings?.allowParticipantPolls ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                  <p className="text-gray-600 mb-2">No active polls yet</p>
+                  {currentUserId && (
+                    <p className="text-sm text-gray-500">
+                      Click "Create Poll" above to create one
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              polls.map((poll) => {
               const userVotedOptionId = userVotes.get(poll.id)
               const showResultsImmediately = event?.settings?.showResultsImmediately !== false
               const showResults = showResultsImmediately || userVotedOptionId
+              const isPending = !poll.isActive
+              const isOwnPoll = currentUserId && poll.createdBy?.id === currentUserId
+              const creatorName = poll.createdBy?.name || 'Anonymous'
               
               return (
-                <Card key={poll.id}>
+                <Card key={poll.id} className={isPending ? 'border-yellow-200 bg-yellow-50' : ''}>
                   <CardHeader>
-                    <CardTitle>{poll.title}</CardTitle>
-                    <CardDescription>
-                      {userVotedOptionId 
-                        ? 'Click your vote to remove it' 
-                        : showResults 
-                          ? 'Select an option to vote'
-                          : 'Vote to see results'}
-                    </CardDescription>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <CardTitle className="text-lg">{poll.title}</CardTitle>
+                          {isPending && (
+                            <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium border border-yellow-200">
+                              Pending
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
+                          <span>by {creatorName}</span>
+                        </div>
+                        <CardDescription>
+                          {isPending 
+                            ? '⏳ Pending approval from moderator'
+                            : userVotedOptionId 
+                              ? 'Click your vote to remove it' 
+                              : showResults 
+                                ? 'Select an option to vote'
+                                : 'Vote to see results'}
+                        </CardDescription>
+                      </div>
+                      {isOwnPoll && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this poll?')) {
+                              fetch(`/api/events/${event.id}/polls/${poll.id}`, {
+                                method: 'DELETE',
+                              }).then(() => {
+                                toast({
+                                  title: 'Poll deleted',
+                                  description: 'Your poll has been deleted',
+                                })
+                              }).catch(() => {
+                                toast({
+                                  variant: 'destructive',
+                                  title: 'Error',
+                                  description: 'Failed to delete poll',
+                                })
+                              })
+                            }
+                          }}
+                          title="Delete your poll"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
@@ -701,6 +814,7 @@ export default function ParticipantViewPage() {
                                 isVoted ? 'bg-primary text-primary-foreground' : ''
                               }`}
                               onClick={() => handleVote(poll.id, option.id)}
+                              disabled={isPending}
                             >
                               <span className="flex items-center gap-2">
                                 {isVoted && (
@@ -740,7 +854,12 @@ export default function ParticipantViewPage() {
                         )
                       })}
                     </div>
-                    {!showResults && (
+                    {isPending && (
+                      <p className="text-xs text-center text-yellow-700 mt-4 bg-yellow-100 p-2 rounded">
+                        This poll is awaiting approval. You'll be able to vote once a moderator approves it.
+                      </p>
+                    )}
+                    {!isPending && !showResults && (
                       <p className="text-xs text-center text-gray-500 mt-4">
                         Results will be visible after you vote
                       </p>
@@ -748,7 +867,8 @@ export default function ParticipantViewPage() {
                   </CardContent>
                 </Card>
               )
-            })}
+            })
+            )}
           </div>
         )}
 
@@ -826,7 +946,7 @@ export default function ParticipantViewPage() {
                               </span>
                             )}
                           </div>
-                          {isOwnQuestion && currentUserId && (
+                          {isOwnQuestion && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -872,6 +992,18 @@ export default function ParticipantViewPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Create Poll Dialog */}
+      {event && (
+        <ParticipantCreatePollDialog
+          eventId={event.id}
+          open={createPollDialogOpen}
+          onOpenChange={setCreatePollDialogOpen}
+          onPollCreated={() => {
+            // Poll will appear via Socket.io real-time update
+          }}
+        />
+      )}
     </div>
   )
 }

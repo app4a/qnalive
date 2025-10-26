@@ -22,12 +22,12 @@ import type { Socket } from 'socket.io-client'
 interface Question {
   id: string
   content: string
-  authorName: string
+  authorName: string | null
   upvotesCount: number
   isAnswered: boolean
   isArchived: boolean
   status: 'PENDING' | 'APPROVED' | 'REJECTED'
-  createdAt: string
+  createdAt: string | Date
   author?: {
     id: string
     name: string | null
@@ -269,6 +269,12 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
 
   return (
     <>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold flex items-center">
+          <MessageSquare className="h-5 w-5 mr-2" />
+          Questions ({questions.length})
+        </h2>
+      </div>
       <div className="space-y-4">
         {questions.map((question) => (
           <div

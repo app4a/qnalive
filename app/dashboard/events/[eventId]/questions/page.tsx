@@ -79,13 +79,7 @@ export default async function ManageQuestionsPage({ params }: { params: { eventI
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <MessageSquare className="h-5 w-5 mr-2" />
-              Questions ({questions.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <QuestionsList 
               questions={questions}
               eventId={params.eventId}

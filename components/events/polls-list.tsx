@@ -32,10 +32,15 @@ interface Poll {
   title: string
   type: string
   isActive: boolean
-  createdAt: string
+  createdAt: string | Date
   options: PollOption[]
   _count: {
     votes: number
+  }
+  createdBy?: {
+    id: string
+    name: string | null
+    image: string | null
   }
 }
 
@@ -201,6 +206,12 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
 
   return (
     <>
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold flex items-center">
+          <BarChart3 className="h-5 w-5 mr-2" />
+          Polls ({polls.length})
+        </h2>
+      </div>
       <div className="space-y-4">
         {polls.map((poll) => {
           const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votesCount, 0)
@@ -218,6 +229,8 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Badge variant="outline">{getPollTypeLabel(poll.type)}</Badge>
                     <span>•</span>
+                    <span>Created by: {poll.createdBy?.name || 'Unknown'}</span>
+                    <span>•</span>
                     <span>{totalVotes} votes</span>
                     <span>•</span>
                     <span>{new Date(poll.createdAt).toLocaleDateString()}</span>
@@ -226,6 +239,9 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
                 <div className="flex items-center gap-2">
                   {poll.isActive && (
                     <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
+                  )}
+                  {!poll.isActive && (
+                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>
                   )}
                 </div>
               </div>

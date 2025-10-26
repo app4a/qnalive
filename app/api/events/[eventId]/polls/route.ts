@@ -41,7 +41,9 @@ export async function POST(
 
     // Check if user is owner or if participant polls are allowed
     const settings = event.settings as { allowParticipantPolls?: boolean }
-    if (event.ownerId !== session.user.id && !settings.allowParticipantPolls) {
+    const isOwner = event.ownerId === session.user.id
+    
+    if (!isOwner && !settings.allowParticipantPolls) {
       return NextResponse.json(
         { error: 'Forbidden' },
         { status: 403 }
@@ -51,6 +53,10 @@ export async function POST(
     const body = await req.json()
     const validatedData = createPollSchema.parse(body)
 
+    // Participant polls start as inactive (require approval)
+    // Owner polls are active by default
+    const isActive = isOwner
+
     // Create poll with options
     const poll = await prisma.poll.create({
       data: {
@@ -58,6 +64,7 @@ export async function POST(
         createdById: session.user.id,
         title: validatedData.title,
         type: validatedData.type,
+        isActive,
         allowMultipleVotes: validatedData.allowMultipleVotes,
         settings: validatedData.settings || {},
         options: {
@@ -85,8 +92,20 @@ export async function POST(
       const { getIO } = await import('@/lib/socket')
       const io = getIO()
       if (io) {
-        console.log(`Emitting poll:new event for poll ${poll.id} to event room ${params.eventId}`)
-        io.to(params.eventId).emit('poll:new', { poll })
+        if (poll.isActive) {
+          // Active polls broadcast to everyone
+          console.log(`Emitting ACTIVE poll:new event for poll ${poll.id} to event room ${params.eventId}`)
+          io.to(params.eventId).emit('poll:new', { poll })
+        } else {
+          // Inactive participant polls notify admin/moderators only
+          console.log(`Emitting INACTIVE poll:new event for poll ${poll.id} to event room ${params.eventId}`)
+          io.to(params.eventId).emit('poll:new', { poll })
+          
+          // Also send to creator's personal room so they can see their pending poll
+          if (poll.createdById) {
+            io.to(`user:${poll.createdById}`).emit('poll:new', { poll })
+          }
+        }
       }
     } catch (error) {
       console.error('Failed to emit socket event:', error)

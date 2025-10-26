@@ -116,20 +116,15 @@ export async function PUT(
   }
 }
 
-// DELETE /api/events/[eventId]/questions/[id] - Delete question (admin or question author)
+// DELETE /api/events/[eventId]/questions/[id] - Delete question (admin, question author, or anonymous author)
 export async function DELETE(
   req: NextRequest,
   { params }: { params: { eventId: string; id: string } }
 ) {
   try {
     const session = await auth()
-
-    if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    const { searchParams } = new URL(req.url)
+    const sessionId = searchParams.get('sessionId')
 
     const event = await prisma.event.findUnique({
       where: { id: params.eventId },
@@ -142,7 +137,7 @@ export async function DELETE(
       )
     }
 
-    // Check if user is event owner OR question author
+    // Check if user is event owner OR question author (authenticated or anonymous)
     const question = await prisma.question.findUnique({
       where: { id: params.id },
     })
@@ -154,12 +149,14 @@ export async function DELETE(
       )
     }
 
-    const isOwner = event.ownerId === session.user.id
-    const isAuthor = question.authorId === session.user.id
+    // Check authorization: event owner, authenticated author, or anonymous author (by sessionId)
+    const isOwner = session?.user?.id && event.ownerId === session.user.id
+    const isAuthenticatedAuthor = session?.user?.id && question.authorId === session.user.id
+    const isAnonymousAuthor = !session?.user?.id && sessionId && (question as any).sessionId === sessionId
 
-    if (!isOwner && !isAuthor) {
+    if (!isOwner && !isAuthenticatedAuthor && !isAnonymousAuthor) {
       return NextResponse.json(
-        { error: 'Forbidden' },
+        { error: 'Forbidden - You can only delete your own questions' },
         { status: 403 }
       )
     }

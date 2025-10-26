@@ -83,13 +83,7 @@ export default async function ManagePollsPage({ params }: { params: { eventId: s
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <BarChart3 className="h-5 w-5 mr-2" />
-              Polls ({polls.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             <PollsList 
               polls={polls}
               eventId={params.eventId}
