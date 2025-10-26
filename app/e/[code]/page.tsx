@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { getSocket } from '@/lib/socket-client'
 import { getSessionId } from '@/lib/utils'
-import { ArrowUp, MessageSquare, Users, BarChart3, Send, Trash2, LogIn, User } from 'lucide-react'
+import { ArrowUp, MessageSquare, Users, BarChart3, Send, Trash2, LogIn } from 'lucide-react'
 import type { Socket } from 'socket.io-client'
 import {
   AlertDialog,
@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { UserMenu } from '@/components/layout/user-menu'
 
 interface Question {
   id: string
@@ -65,6 +66,7 @@ export default function ParticipantViewPage() {
   const [socket, setSocket] = useState<Socket | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserName, setCurrentUserName] = useState<string | null>(null)
+  const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null)
   const [upvotedQuestions, setUpvotedQuestions] = useState<Set<string>>(new Set())
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
@@ -112,7 +114,8 @@ export default function ParticipantViewPage() {
           const sessionData = await sessionResponse.json()
           userIdForSocket = sessionData?.user?.id || null
           setCurrentUserId(userIdForSocket)
-          setCurrentUserName(sessionData?.user?.name || sessionData?.user?.email || null)
+          setCurrentUserName(sessionData?.user?.name || null)
+          setCurrentUserEmail(sessionData?.user?.email || null)
         } catch {
           // Not authenticated, use session ID only
         }
@@ -487,11 +490,8 @@ export default function ParticipantViewPage() {
                 <Users className="h-4 w-4" />
                 <span>{participantCount} participants</span>
               </div>
-              {currentUserId && currentUserName ? (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full">
-                  <User className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm font-medium text-gray-700">{currentUserName}</span>
-                </div>
+              {currentUserId ? (
+                <UserMenu userName={currentUserName} userEmail={currentUserEmail} />
               ) : (
                 <Button asChild variant="outline" size="sm">
                   <a href="/auth/signin">

@@ -4,8 +4,9 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { MessageSquare, Plus, Users, BarChart3, User } from 'lucide-react'
+import { MessageSquare, Plus, Users, BarChart3 } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
+import { UserMenu } from '@/components/layout/user-menu'
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -37,17 +38,12 @@ export default async function DashboardPage() {
       {/* Header */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">QnALive</span>
           </Link>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full">
-              <User className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                {session.user.name || session.user.email}
-              </span>
-            </div>
+            <UserMenu userName={session.user.name} userEmail={session.user.email} />
             <Link href="/dashboard/events/new">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />

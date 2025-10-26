@@ -4,9 +4,10 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { MessageSquare, BarChart3, Users, ExternalLink, Settings, User } from 'lucide-react'
+import { MessageSquare, BarChart3, Users, ExternalLink, Settings } from 'lucide-react'
 import { EventCodeCard } from '@/components/events/event-code-card'
 import { DeleteEventButton } from '@/components/events/delete-event-button'
+import { UserMenu } from '@/components/layout/user-menu'
 
 export default async function EventAdminPage({ params }: { params: { eventId: string } }) {
   const session = await auth()
@@ -59,16 +60,11 @@ export default async function EventAdminPage({ params }: { params: { eventId: st
       {/* Header */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">QnALive</span>
           </Link>
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full">
-            <User className="h-4 w-4 text-gray-600" />
-            <span className="text-sm font-medium text-gray-700">
-              {session.user.name || session.user.email}
-            </span>
-          </div>
+          <UserMenu userName={session.user.name} userEmail={session.user.email} />
         </div>
       </header>
 

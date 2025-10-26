@@ -72,7 +72,7 @@ export default function NewEventPage() {
       {/* Header */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/dashboard" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-2">
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">QnALive</span>
           </Link>

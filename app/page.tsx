@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, BarChart3, Users, Zap } from 'lucide-react'
+import { UserMenu } from '@/components/layout/user-menu'
 
 export default async function LandingPage() {
   const session = await auth()
@@ -19,9 +20,7 @@ export default async function LandingPage() {
           <nav className="flex items-center space-x-4">
             {session?.user ? (
               <>
-                <span className="text-sm text-gray-600">
-                  {session.user.name || session.user.email}
-                </span>
+                <UserMenu userName={session.user.name} userEmail={session.user.email} />
                 <Link href="/dashboard">
                   <Button>Dashboard</Button>
                 </Link>

@@ -4,8 +4,9 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Settings, User } from 'lucide-react'
+import { ArrowLeft, Settings } from 'lucide-react'
 import { EventSettingsForm } from '@/components/events/event-settings-form'
+import { UserMenu } from '@/components/layout/user-menu'
 
 export default async function EventSettingsPage({ params }: { params: { eventId: string } }) {
   const session = await auth()
@@ -44,12 +45,7 @@ export default async function EventSettingsPage({ params }: { params: { eventId:
                 <p className="text-sm text-gray-600">{event.title}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full">
-              <User className="h-4 w-4 text-gray-600" />
-              <span className="text-sm font-medium text-gray-700">
-                {session.user.name || session.user.email}
-              </span>
-            </div>
+            <UserMenu userName={session.user.name} userEmail={session.user.email} />
           </div>
         </div>
       </header>

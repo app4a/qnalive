@@ -4,9 +4,10 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, BarChart3, Plus, User } from 'lucide-react'
+import { ArrowLeft, BarChart3, Plus } from 'lucide-react'
 import { PollsList } from '@/components/events/polls-list'
 import { CreatePollDialog } from '@/components/events/create-poll-dialog'
+import { UserMenu } from '@/components/layout/user-menu'
 
 export default async function ManagePollsPage({ params }: { params: { eventId: string } }) {
   const session = await auth()
@@ -72,12 +73,7 @@ export default async function ManagePollsPage({ params }: { params: { eventId: s
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full">
-                <User className="h-4 w-4 text-gray-600" />
-                <span className="text-sm font-medium text-gray-700">
-                  {session.user.name || session.user.email}
-                </span>
-              </div>
+              <UserMenu userName={session.user.name} userEmail={session.user.email} />
               <CreatePollDialog eventId={params.eventId} />
             </div>
           </div>
