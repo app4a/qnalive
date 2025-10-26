@@ -14,10 +14,18 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ArrowUp, Check, X, Archive, Trash2, CheckCircle, MessageSquare } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { ArrowUp, Check, X, Archive, Trash2, CheckCircle, MessageSquare, Clock, TrendingUp } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getSocket } from '@/lib/socket-client'
 import type { Socket } from 'socket.io-client'
+import { formatDateTime } from '@/lib/date-utils'
 
 interface Question {
   id: string
@@ -47,6 +55,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null)
   const [socket, setSocket] = useState<Socket | null>(null)
+  const [sortBy, setSortBy] = useState<'latest' | 'votes'>('latest')
   const router = useRouter()
   const { toast } = useToast()
 
@@ -258,6 +267,20 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
     }
   }
 
+  // Sort questions based on selected sort option
+  const sortedQuestions = [...questions].sort((a, b) => {
+    if (sortBy === 'latest') {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    } else {
+      // Sort by votes
+      if (b.upvotesCount !== a.upvotesCount) {
+        return b.upvotesCount - a.upvotesCount
+      }
+      // If votes are equal, sort by latest
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    }
+  })
+
   if (questions.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -269,14 +292,33 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
 
   return (
     <>
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-semibold flex items-center">
           <MessageSquare className="h-5 w-5 mr-2" />
           Questions ({questions.length})
         </h2>
+        <Select value={sortBy} onValueChange={(value: 'latest' | 'votes') => setSortBy(value)}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="latest">
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4" />
+                <span>Latest First</span>
+              </div>
+            </SelectItem>
+            <SelectItem value="votes">
+              <div className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                <span>Most Voted</span>
+              </div>
+            </SelectItem>
+          </SelectContent>
+        </Select>
       </div>
       <div className="space-y-4">
-        {questions.map((question) => (
+        {sortedQuestions.map((question) => (
           <div
             key={question.id}
             className={`border rounded-lg p-4 ${
@@ -301,7 +343,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                     <div className="flex items-center gap-2 text-sm text-gray-600">
                       <span>by {question.authorName}</span>
                       <span>•</span>
-                      <span>{new Date(question.createdAt).toLocaleDateString()}</span>
+                      <span>{formatDateTime(question.createdAt)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

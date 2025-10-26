@@ -46,11 +46,9 @@ export default async function ManageQuestionsPage({ params }: { params: { eventI
         },
       },
     },
-    orderBy: [
-      { isArchived: 'asc' }, // Non-archived first
-      { status: 'asc' }, // Then PENDING first
-      { upvotesCount: 'desc' },
-    ],
+    orderBy: {
+      createdAt: 'desc', // Latest first by default
+    },
   })
 
   return (

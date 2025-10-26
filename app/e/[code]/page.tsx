@@ -10,7 +10,8 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { getSocket } from '@/lib/socket-client'
 import { getSessionId } from '@/lib/utils'
-import { ArrowUp, MessageSquare, Users, BarChart3, Send, Trash2, LogIn } from 'lucide-react'
+import { formatDateTime } from '@/lib/date-utils'
+import { ArrowUp, MessageSquare, Users, BarChart3, Send, Trash2, LogIn, Clock, TrendingUp } from 'lucide-react'
 import type { Socket } from 'socket.io-client'
 import {
   AlertDialog,
@@ -22,6 +23,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { UserMenu } from '@/components/layout/user-menu'
 import { ParticipantCreatePollDialog } from '@/components/events/participant-create-poll-dialog'
 
@@ -44,6 +52,7 @@ interface Poll {
   title: string
   type: string
   isActive: boolean
+  createdAt: string
   options: PollOption[]
   userVote?: string | null
   createdBy?: {
@@ -80,6 +89,8 @@ export default function ParticipantViewPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null)
   const [createPollDialogOpen, setCreatePollDialogOpen] = useState(false)
+  const [questionSortBy, setQuestionSortBy] = useState<'latest' | 'votes'>('latest')
+  const [pollSortBy, setPollSortBy] = useState<'latest' | 'votes'>('latest')
   const { toast } = useToast()
 
   useEffect(() => {
@@ -706,36 +717,74 @@ export default function ParticipantViewPage() {
         {/* Active Polls */}
         {(polls.length > 0 || event?.settings?.allowParticipantPolls) && (
           <div className="mb-6 space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold flex items-center">
                 <BarChart3 className="h-5 w-5 mr-2" />
                 Active Polls
               </h2>
-              {event?.settings?.allowParticipantPolls && currentUserId && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setCreatePollDialogOpen(true)}
-                >
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  Create Poll
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                <Select value={pollSortBy} onValueChange={(value: 'latest' | 'votes') => setPollSortBy(value)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="latest">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>Latest First</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="votes">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="h-4 w-4" />
+                        <span>Most Voted</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                {event?.settings?.allowParticipantPolls && currentUserId && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCreatePollDialogOpen(true)}
+                  >
+                    <BarChart3 className="h-4 w-4 mr-2" />
+                    Create Poll
+                  </Button>
+                )}
+              </div>
             </div>
-            {polls.length === 0 && event?.settings?.allowParticipantPolls ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <BarChart3 className="h-12 w-12 mx-auto mb-3 text-gray-400" />
-                  <p className="text-gray-600 mb-2">No active polls yet</p>
-                  {currentUserId && (
-                    <p className="text-sm text-gray-500">
-                      Click "Create Poll" above to create one
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            ) : (
-              polls.map((poll) => {
+            {(() => {
+              // Sort polls based on selected sort option
+              const sortedPolls = [...polls].sort((a, b) => {
+                if (pollSortBy === 'latest') {
+                  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                } else {
+                  // Sort by votes (total votes count)
+                  const aVotes = a.options.reduce((sum, opt) => sum + opt.votesCount, 0)
+                  const bVotes = b.options.reduce((sum, opt) => sum + opt.votesCount, 0)
+                  if (bVotes !== aVotes) {
+                    return bVotes - aVotes
+                  }
+                  // If votes are equal, sort by latest
+                  return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                }
+              })
+              
+              return sortedPolls.length === 0 && event?.settings?.allowParticipantPolls ? (
+                <Card>
+                  <CardContent className="py-8 text-center">
+                    <BarChart3 className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                    <p className="text-gray-600 mb-2">No active polls yet</p>
+                    {currentUserId && (
+                      <p className="text-sm text-gray-500">
+                        Click "Create Poll" above to create one
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              ) : (
+                sortedPolls.map((poll) => {
               const userVotedOptionId = userVotes.get(poll.id)
               const showResultsImmediately = event?.settings?.showResultsImmediately !== false
               const showResults = showResultsImmediately || userVotedOptionId
@@ -758,6 +807,8 @@ export default function ParticipantViewPage() {
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mb-1">
                           <span>by {creatorName}</span>
+                          <span>•</span>
+                          <span>{formatDateTime(poll.createdAt)}</span>
                         </div>
                         <CardDescription>
                           {isPending 
@@ -868,7 +919,8 @@ export default function ParticipantViewPage() {
                 </Card>
               )
             })
-            )}
+              )
+            })()}
           </div>
         )}
 
@@ -887,20 +939,55 @@ export default function ParticipantViewPage() {
               return isCreator
             })
 
+            // Sort questions based on selected sort option
+            const sortedQuestions = [...filteredQuestions].sort((a, b) => {
+              if (questionSortBy === 'latest') {
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              } else {
+                // Sort by votes
+                if (b.upvotesCount !== a.upvotesCount) {
+                  return b.upvotesCount - a.upvotesCount
+                }
+                // If votes are equal, sort by latest
+                return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              }
+            })
+
             return (
               <>
-                <h2 className="text-xl font-bold flex items-center">
-                  <MessageSquare className="h-5 w-5 mr-2" />
-                  Questions ({filteredQuestions.length})
-                </h2>
-                {filteredQuestions.length === 0 ? (
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center">
+                    <MessageSquare className="h-5 w-5 mr-2" />
+                    Questions ({filteredQuestions.length})
+                  </h2>
+                  <Select value={questionSortBy} onValueChange={(value: 'latest' | 'votes') => setQuestionSortBy(value)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="latest">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          <span>Latest First</span>
+                        </div>
+                      </SelectItem>
+                      <SelectItem value="votes">
+                        <div className="flex items-center gap-2">
+                          <TrendingUp className="h-4 w-4" />
+                          <span>Most Voted</span>
+                        </div>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {sortedQuestions.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center">
                       <p className="text-gray-500">No questions yet. Be the first to ask!</p>
                     </CardContent>
                   </Card>
                 ) : (
-                  filteredQuestions.map((question) => {
+                  sortedQuestions.map((question) => {
               const isUpvoted = upvotedQuestions.has(question.id)
               const isOwnQuestion = currentUserId 
                 ? question.authorId === currentUserId 
@@ -930,6 +1017,8 @@ export default function ParticipantViewPage() {
                         <div className="flex items-center justify-between text-sm text-gray-600">
                           <div className="flex items-center gap-2">
                             <span>by {question.authorName}</span>
+                            <span>•</span>
+                            <span>{formatDateTime(question.createdAt)}</span>
                             {question.status === 'PENDING' && (
                               <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs font-medium">
                                 Pending Review
