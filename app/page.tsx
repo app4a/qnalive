@@ -41,7 +41,7 @@ export default async function LandingPage() {
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
-        <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+        <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight pb-2">
           Engage Your Audience in Real-Time
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
