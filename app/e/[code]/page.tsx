@@ -89,7 +89,8 @@ export default function ParticipantViewPage() {
         })
 
         // Fetch questions sorted by most recent first
-        const questionsRes = await fetch(`/api/events/${data.id}/questions?sortBy=recent`)
+        // Include sessionId so anonymous users can see their own pending questions
+        const questionsRes = await fetch(`/api/events/${data.id}/questions?sortBy=recent&sessionId=${sessionId}`)
         const questionsData = await questionsRes.json()
         setQuestions(questionsData)
 
@@ -141,6 +142,8 @@ export default function ParticipantViewPage() {
 
         // Listen for real-time updates
         const handleQuestionNew = (data: any) => {
+          console.log('[Participant] Received question:new event:', data.question.id, 'status:', data.question.status)
+          
           setQuestions(prev => {
             // Check if question already exists
             const existingIndex = prev.findIndex(q => q.id === data.question.id)
@@ -150,8 +153,22 @@ export default function ParticipantViewPage() {
               updated[existingIndex] = data.question
               return updated
             }
-            // Add new question
-            return [data.question, ...prev]
+            
+            // Filter: Only add questions that should be visible to this participant
+            // 1. Show APPROVED questions from everyone
+            // 2. Show own questions (any status)
+            const isOwnQuestion = userIdForSocket 
+              ? data.question.authorId === userIdForSocket
+              : data.question.sessionId === sessionIdForSocket
+            
+            if (data.question.status === 'APPROVED' || isOwnQuestion) {
+              // Add new question
+              return [data.question, ...prev]
+            }
+            
+            // Ignore PENDING/REJECTED questions from other users
+            console.log('[Participant] Ignoring question (not visible to this user)')
+            return prev
           })
         }
 
@@ -162,13 +179,25 @@ export default function ParticipantViewPage() {
         }
 
         const handleQuestionUpdated = (data: any) => {
+          console.log('[Participant] Received question:updated event:', data.question.id, 'status:', data.question.status)
+          
           setQuestions(prev => {
             const exists = prev.some(q => q.id === data.question.id)
+            const isOwnQuestion = userIdForSocket 
+              ? data.question.authorId === userIdForSocket
+              : data.question.sessionId === sessionIdForSocket
+            
             if (exists) {
-              // Update existing question
-              return prev.map(q => q.id === data.question.id ? data.question : q)
-            } else if (data.question.status === 'APPROVED') {
-              // Add newly approved question
+              // Update existing question only if it should still be visible
+              if (data.question.status === 'APPROVED' || isOwnQuestion) {
+                return prev.map(q => q.id === data.question.id ? data.question : q)
+              } else {
+                // Question became REJECTED/PENDING and user is not the author - remove it
+                console.log('[Participant] Removing question (no longer visible)')
+                return prev.filter(q => q.id !== data.question.id)
+              }
+            } else if (data.question.status === 'APPROVED' || isOwnQuestion) {
+              // Add newly approved question or newly visible own question
               return [data.question, ...prev]
             }
             return prev

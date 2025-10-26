@@ -74,17 +74,20 @@ export async function POST(
       const io = getIO()
       if (io) {
         if (question.status === 'APPROVED') {
-          // Broadcast approved questions to everyone
+          // Broadcast approved questions to everyone in the event room
+          console.log(`Emitting APPROVED question ${question.id} to event room ${params.eventId}`)
           io.to(params.eventId).emit('question:new', { question })
         } else if (question.status === 'PENDING') {
           // For pending questions:
-          // - If authenticated user, send to their user room
-          // - For anonymous users, they'll see it via the API response (no real-time event needed)
+          // 1. Send to the event room (for admins/moderators to see)
+          console.log(`Emitting PENDING question ${question.id} to event room ${params.eventId}`)
+          io.to(params.eventId).emit('question:new', { question })
+          
+          // 2. Also send to author's personal room if they're authenticated
+          //    (so they see it immediately even if they refresh)
           if (question.authorId) {
             io.to(`user:${question.authorId}`).emit('question:new', { question })
           }
-          // Note: Anonymous pending questions don't get Socket.io events,
-          // but they're returned in the API response for immediate display
         }
       }
     } catch (error) {
@@ -134,6 +137,7 @@ export async function GET(
 
     const isOwner = session?.user?.id === event.ownerId
     const userId = session?.user?.id
+    const sessionId = searchParams.get('sessionId') // Get sessionId from query params
 
     // Build query
     const where: any = {
@@ -149,8 +153,14 @@ export async function GET(
           { status: 'APPROVED' },
           { authorId: userId }
         ]
+      } else if (sessionId) {
+        // Anonymous users with sessionId see approved questions OR their own questions (any status)
+        where.OR = [
+          { status: 'APPROVED' },
+          { sessionId: sessionId }
+        ]
       } else {
-        // Anonymous users only see approved questions
+        // Anonymous users without sessionId only see approved questions
         where.status = 'APPROVED'
       }
     } else if (status) {

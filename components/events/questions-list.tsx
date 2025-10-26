@@ -60,6 +60,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
 
     // Listen for question events
     const handleQuestionNew = (data: any) => {
+      console.log('[Admin] Received question:new event:', data.question.id)
       setQuestions(prev => {
         const existingIndex = prev.findIndex(q => q.id === data.question.id)
         if (existingIndex !== -1) {
@@ -68,25 +69,44 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
           updated[existingIndex] = data.question
           return updated
         }
-        // Add new question
-        return [data.question, ...prev]
+        // Add new question with proper sorting
+        const newQuestions = [data.question, ...prev].sort((a, b) => {
+          if (a.isArchived !== b.isArchived) return a.isArchived ? 1 : -1
+          if (a.status === 'PENDING' && b.status !== 'PENDING') return -1
+          if (a.status !== 'PENDING' && b.status === 'PENDING') return 1
+          return b.upvotesCount - a.upvotesCount
+        })
+        return newQuestions
       })
     }
 
     const handleQuestionUpdated = (data: any) => {
+      console.log('[Admin] Received question:updated event:', data.question.id)
       setQuestions(prev => prev.map(q =>
         q.id === data.question.id ? data.question : q
-      ))
+      ).sort((a, b) => {
+        if (a.isArchived !== b.isArchived) return a.isArchived ? 1 : -1
+        if (a.status === 'PENDING' && b.status !== 'PENDING') return -1
+        if (a.status !== 'PENDING' && b.status === 'PENDING') return 1
+        return b.upvotesCount - a.upvotesCount
+      }))
     }
 
     const handleQuestionDeleted = (data: any) => {
+      console.log('[Admin] Received question:deleted event:', data.questionId)
       setQuestions(prev => prev.filter(q => q.id !== data.questionId))
     }
 
     const handleQuestionUpvoted = (data: any) => {
+      console.log('[Admin] Received question:upvoted event:', data.questionId)
       setQuestions(prev => prev.map(q =>
         q.id === data.questionId ? { ...q, upvotesCount: data.upvotesCount } : q
-      ))
+      ).sort((a, b) => {
+        if (a.isArchived !== b.isArchived) return a.isArchived ? 1 : -1
+        if (a.status === 'PENDING' && b.status !== 'PENDING') return -1
+        if (a.status !== 'PENDING' && b.status === 'PENDING') return 1
+        return b.upvotesCount - a.upvotesCount
+      }))
     }
 
     socketInstance.on('question:new', handleQuestionNew)
@@ -95,10 +115,11 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
     socketInstance.on('question:upvoted', handleQuestionUpvoted)
 
     return () => {
-      socketInstance.off('question:new', handleQuestionNew)
-      socketInstance.off('question:updated', handleQuestionUpdated)
-      socketInstance.off('question:deleted', handleQuestionDeleted)
-      socketInstance.off('question:upvoted', handleQuestionUpvoted)
+      // Remove all listeners without passing handler reference
+      socketInstance.off('question:new')
+      socketInstance.off('question:updated')
+      socketInstance.off('question:deleted')
+      socketInstance.off('question:upvoted')
       socketInstance.emit('event:leave', { eventId })
     }
   }, [eventId, userId])

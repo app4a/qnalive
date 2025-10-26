@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 const updateEventSchema = z.object({
   title: z.string().min(3).max(255).optional(),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(), // Allow null for empty descriptions
   startTime: z.string().datetime().optional().nullable(),
   endTime: z.string().datetime().optional().nullable(),
   isActive: z.boolean().optional(),
@@ -100,6 +100,13 @@ export async function PUT(
     const validatedData = updateEventSchema.parse(body)
     console.log('Validated data:', JSON.stringify(validatedData, null, 2))
 
+    // Check if moderation is being disabled
+    const previousSettings = event.settings as { moderationEnabled?: boolean }
+    const newSettings = validatedData.settings
+    const moderationBeingDisabled = 
+      previousSettings?.moderationEnabled === true && 
+      newSettings?.moderationEnabled === false
+
     const updatedEvent = await prisma.event.update({
       where: { id: params.eventId },
       data: {
@@ -135,11 +142,95 @@ export async function PUT(
       },
     })
 
-    return NextResponse.json(updatedEvent)
+    // If moderation was just disabled, auto-approve all pending questions
+    let pendingQuestions: any[] = []
+    if (moderationBeingDisabled) {
+      console.log('Moderation disabled - auto-approving pending questions')
+      
+      // Find all pending questions for this event
+      pendingQuestions = await prisma.question.findMany({
+        where: {
+          eventId: params.eventId,
+          status: 'PENDING',
+        },
+        include: {
+          author: {
+            select: { id: true, name: true, image: true },
+          },
+          upvotes: {
+            select: {
+              userId: true,
+              sessionId: true,
+            },
+          },
+          _count: {
+            select: { upvotes: true },
+          },
+        },
+      })
+
+      if (pendingQuestions.length > 0) {
+        // Auto-approve all pending questions
+        await prisma.question.updateMany({
+          where: {
+            eventId: params.eventId,
+            status: 'PENDING',
+          },
+          data: {
+            status: 'APPROVED',
+          },
+        })
+
+        console.log(`Auto-approved ${pendingQuestions.length} pending questions`)
+
+        // Emit Socket.io events for newly approved questions
+        try {
+          const { getIO } = await import('@/lib/socket')
+          const io = getIO()
+          if (io) {
+            // Update the questions to have APPROVED status for the event
+            const approvedQuestions = pendingQuestions.map(q => ({
+              ...q,
+              status: 'APPROVED' as const,
+            }))
+            
+            // Broadcast each newly approved question to everyone
+            approvedQuestions.forEach(question => {
+              io.to(params.eventId).emit('question:new', { question })
+            })
+          }
+        } catch (error) {
+          console.error('Failed to emit socket events for auto-approved questions:', error)
+        }
+      }
+    }
+
+    // Return updated event with info about auto-approved questions
+    const response: any = { ...updatedEvent }
+    if (moderationBeingDisabled && pendingQuestions && pendingQuestions.length > 0) {
+      response.autoApprovedCount = pendingQuestions.length
+    }
+    
+    return NextResponse.json(response)
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('Validation error:', JSON.stringify(error.errors, null, 2))
+      
+      // Format errors for better readability
+      const formattedErrors = error.errors.map(err => ({
+        field: err.path.join('.'),
+        message: err.message,
+        received: err.code === 'invalid_type' ? `received ${(err as any).received}` : undefined
+      }))
+      
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { 
+          error: 'Validation failed', 
+          details: error.errors,
+          message: formattedErrors.map(e => 
+            `${e.field}: ${e.message}${e.received ? ` (${e.received})` : ''}`
+          ).join('; ')
+        },
         { status: 400 }
       )
     }

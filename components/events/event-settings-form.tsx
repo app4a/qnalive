@@ -75,21 +75,28 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
       if (!response.ok) {
         const data = await response.json()
         
-        // If validation error, show detailed errors
-        if (data.details && Array.isArray(data.details)) {
-          const errorMessages = data.details.map((detail: any) => 
-            `${detail.path.join('.')}: ${detail.message}`
-          ).join(', ')
-          throw new Error(`Validation failed: ${errorMessages}`)
+        // Use the formatted message from the API if available
+        if (data.message) {
+          throw new Error(data.message)
         }
         
         throw new Error(data.error || 'Failed to update event')
       }
 
-      toast({
-        title: 'Settings updated',
-        description: 'Your event settings have been saved',
-      })
+      const data = await response.json()
+      
+      // Show special message if questions were auto-approved
+      if (data.autoApprovedCount && data.autoApprovedCount > 0) {
+        toast({
+          title: 'Settings updated',
+          description: `Moderation disabled. ${data.autoApprovedCount} pending question${data.autoApprovedCount > 1 ? 's' : ''} automatically approved and now visible to participants.`,
+        })
+      } else {
+        toast({
+          title: 'Settings updated',
+          description: 'Your event settings have been saved',
+        })
+      }
 
       router.refresh()
     } catch (error: any) {
@@ -175,7 +182,7 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
           <div className="space-y-0.5">
             <Label htmlFor="moderationEnabled">Enable Question Moderation</Label>
             <p className="text-sm text-gray-600">
-              Review and approve questions before they appear publicly
+              Review and approve questions before they appear publicly. Note: Disabling moderation will automatically approve all pending questions.
             </p>
           </div>
           <Switch
