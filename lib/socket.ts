@@ -31,6 +31,12 @@ export const initSocket = (server: NetServer): SocketIOServer => {
           socket.join(eventId)
           console.log(`Socket ${socket.id} joined event ${eventId}`)
 
+          // Join user's personal room for targeted notifications
+          if (userId) {
+            socket.join(`user:${userId}`)
+            console.log(`Socket ${socket.id} joined user room user:${userId}`)
+          }
+
           // Track participant
           if (userId) {
             await prisma.eventParticipant.upsert({

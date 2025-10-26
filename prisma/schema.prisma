@@ -101,6 +101,7 @@ model Question {
   id          String   @id @default(cuid())
   eventId     String
   authorId    String?
+  sessionId   String?  @db.VarChar(255)
   authorName  String?  @db.VarChar(100)
   content     String   @db.Text
   

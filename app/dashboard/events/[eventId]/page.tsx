@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, BarChart3, Users, ExternalLink, Settings } from 'lucide-react'
 import { EventCodeCard } from '@/components/events/event-code-card'
+import { DeleteEventButton } from '@/components/events/delete-event-button'
 
 export default async function EventAdminPage({ params }: { params: { eventId: string } }) {
   const session = await auth()
@@ -73,21 +74,24 @@ export default async function EventAdminPage({ params }: { params: { eventId: st
         {/* Event Header */}
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">
-            <div>
+            <div className="flex-1">
               <h1 className="text-3xl font-bold mb-2">{event.title}</h1>
               {event.description && (
                 <p className="text-gray-600">{event.description}</p>
               )}
             </div>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                event.isActive
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-gray-100 text-gray-800'
-              }`}
-            >
-              {event.isActive ? 'Active' : 'Inactive'}
-            </span>
+            <div className="flex items-center gap-3">
+              <span
+                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  event.isActive
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-gray-100 text-gray-800'
+                }`}
+              >
+                {event.isActive ? 'Active' : 'Inactive'}
+              </span>
+              <DeleteEventButton eventId={event.id} eventTitle={event.title} />
+            </div>
           </div>
 
           {/* Event Code Card */}
@@ -152,9 +156,11 @@ export default async function EventAdminPage({ params }: { params: { eventId: st
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                Manage Questions (Coming Soon)
-              </Button>
+              <Link href={`/dashboard/events/${event.id}/questions`}>
+                <Button className="w-full">
+                  Manage Questions
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -169,9 +175,11 @@ export default async function EventAdminPage({ params }: { params: { eventId: st
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" disabled>
-                Manage Polls (Coming Soon)
-              </Button>
+              <Link href={`/dashboard/events/${event.id}/polls`}>
+                <Button className="w-full">
+                  Manage Polls
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 
@@ -186,9 +194,11 @@ export default async function EventAdminPage({ params }: { params: { eventId: st
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button className="w-full" variant="outline" disabled>
-                Event Settings (Coming Soon)
-              </Button>
+              <Link href={`/dashboard/events/${event.id}/settings`}>
+                <Button className="w-full" variant="outline">
+                  Event Settings
+                </Button>
+              </Link>
             </CardContent>
           </Card>
 

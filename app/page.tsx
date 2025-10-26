@@ -1,9 +1,12 @@
 import Link from 'next/link'
+import { auth } from '@/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, BarChart3, Users, Zap } from 'lucide-react'
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const session = await auth()
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
       {/* Header */}
@@ -14,12 +17,25 @@ export default function LandingPage() {
             <span className="text-2xl font-bold">QnALive</span>
           </Link>
           <nav className="flex items-center space-x-4">
-            <Link href="/auth/signin">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="/auth/signup">
-              <Button>Get Started</Button>
-            </Link>
+            {session?.user ? (
+              <>
+                <span className="text-sm text-gray-600">
+                  {session.user.name || session.user.email}
+                </span>
+                <Link href="/dashboard">
+                  <Button>Dashboard</Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/signin">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link href="/auth/signup">
+                  <Button>Get Started</Button>
+                </Link>
+              </>
+            )}
           </nav>
         </div>
       </header>
@@ -34,7 +50,7 @@ export default function LandingPage() {
           Perfect for conferences, webinars, classrooms, and town halls.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Link href="/auth/signup">
+          <Link href={session?.user ? "/dashboard/events/new" : "/auth/signup"}>
             <Button size="lg" className="text-lg px-8">
               Create Your Event
             </Button>

@@ -95,7 +95,10 @@ export async function PUT(
     }
 
     const body = await req.json()
+    console.log('Received update event request:', JSON.stringify(body, null, 2))
+    
     const validatedData = updateEventSchema.parse(body)
+    console.log('Validated data:', JSON.stringify(validatedData, null, 2))
 
     const updatedEvent = await prisma.event.update({
       where: { id: params.eventId },

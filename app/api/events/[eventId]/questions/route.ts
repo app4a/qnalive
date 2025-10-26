@@ -33,11 +33,12 @@ export async function POST(
 
     const settings = event.settings as { moderationEnabled?: boolean; allowAnonymous?: boolean }
 
-    // Check if anonymous questions are allowed
-    if (!settings.allowAnonymous && !session?.user?.id) {
+    // Check if user must be authenticated
+    // If allowAnonymous is false, user must be signed in
+    if (settings.allowAnonymous === false && !session?.user?.id) {
       return NextResponse.json(
-        { error: 'Anonymous questions are not allowed for this event' },
-        { status: 403 }
+        { error: 'You must be signed in to ask questions at this event.' },
+        { status: 401 }
       )
     }
 
@@ -47,6 +48,7 @@ export async function POST(
         eventId: params.eventId,
         content: validatedData.content,
         authorId: session?.user?.id,
+        sessionId: !session?.user?.id ? validatedData.sessionId : null,
         authorName: validatedData.authorName || session?.user?.name || 'Anonymous',
         status: settings.moderationEnabled ? 'PENDING' : 'APPROVED',
       },
@@ -54,24 +56,43 @@ export async function POST(
         author: {
           select: { id: true, name: true, image: true },
         },
+        upvotes: {
+          select: {
+            userId: true,
+            sessionId: true,
+          },
+        },
         _count: {
           select: { upvotes: true },
         },
       },
     })
 
-    // Emit Socket.io event for real-time updates
+    // Emit Socket.io events for real-time updates
     try {
       const { getIO } = await import('@/lib/socket')
       const io = getIO()
       if (io) {
-        io.to(params.eventId).emit('question:new', { question })
+        if (question.status === 'APPROVED') {
+          // Broadcast approved questions to everyone
+          io.to(params.eventId).emit('question:new', { question })
+        } else if (question.status === 'PENDING') {
+          // For pending questions:
+          // - If authenticated user, send to their user room
+          // - For anonymous users, they'll see it via the API response (no real-time event needed)
+          if (question.authorId) {
+            io.to(`user:${question.authorId}`).emit('question:new', { question })
+          }
+          // Note: Anonymous pending questions don't get Socket.io events,
+          // but they're returned in the API response for immediate display
+        }
       }
     } catch (error) {
       console.error('Failed to emit socket event:', error)
       // Continue anyway - question was saved
     }
 
+    // Return the created question so the creator can see it immediately
     return NextResponse.json(question, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -112,6 +133,7 @@ export async function GET(
     }
 
     const isOwner = session?.user?.id === event.ownerId
+    const userId = session?.user?.id
 
     // Build query
     const where: any = {
@@ -119,9 +141,18 @@ export async function GET(
       isArchived: false,
     }
 
-    // Non-owners can only see approved questions
+    // Non-owners can only see approved questions OR their own questions
     if (!isOwner) {
-      where.status = 'APPROVED'
+      if (userId) {
+        // Authenticated users see approved questions OR their own questions (any status)
+        where.OR = [
+          { status: 'APPROVED' },
+          { authorId: userId }
+        ]
+      } else {
+        // Anonymous users only see approved questions
+        where.status = 'APPROVED'
+      }
     } else if (status) {
       where.status = status
     }
@@ -145,6 +176,12 @@ export async function GET(
       include: {
         author: {
           select: { id: true, name: true, image: true },
+        },
+        upvotes: {
+          select: {
+            userId: true,
+            sessionId: true,
+          },
         },
         _count: {
           select: { upvotes: true },
