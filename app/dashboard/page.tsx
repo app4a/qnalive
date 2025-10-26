@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { MessageSquare, Plus, Users, BarChart3 } from 'lucide-react'
+import { MessageSquare, Plus, Users, BarChart3, User } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
 
 export default async function DashboardPage() {
@@ -41,10 +41,13 @@ export default async function DashboardPage() {
             <MessageSquare className="h-8 w-8 text-primary" />
             <span className="text-2xl font-bold">QnALive</span>
           </Link>
-          <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">
-              {session.user.name || session.user.email}
-            </span>
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full">
+              <User className="h-4 w-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {session.user.name || session.user.email}
+              </span>
+            </div>
             <Link href="/dashboard/events/new">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />

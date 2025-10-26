@@ -41,7 +41,7 @@ export function DeleteEventButton({ eventId, eventTitle }: DeleteEventButtonProp
 
       toast({
         title: 'Event deleted',
-        description: 'The event has been permanently deleted.',
+        description: `"${eventTitle}" has been permanently deleted.`,
       })
 
       router.push('/dashboard')

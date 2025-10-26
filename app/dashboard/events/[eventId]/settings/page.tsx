@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Settings } from 'lucide-react'
+import { ArrowLeft, Settings, User } from 'lucide-react'
 import { EventSettingsForm } from '@/components/events/event-settings-form'
 
 export default async function EventSettingsPage({ params }: { params: { eventId: string } }) {
@@ -31,16 +31,24 @@ export default async function EventSettingsPage({ params }: { params: { eventId:
       {/* Header */}
       <header className="border-b bg-white">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <Link href={`/dashboard/events/${params.eventId}`}>
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Event
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-2xl font-bold">Event Settings</h1>
-              <p className="text-sm text-gray-600">{event.title}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Link href={`/dashboard/events/${params.eventId}`}>
+                <Button variant="ghost" size="sm">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Event
+                </Button>
+              </Link>
+              <div>
+                <h1 className="text-2xl font-bold">Event Settings</h1>
+                <p className="text-sm text-gray-600">{event.title}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-full">
+              <User className="h-4 w-4 text-gray-600" />
+              <span className="text-sm font-medium text-gray-700">
+                {session.user.name || session.user.email}
+              </span>
             </div>
           </div>
         </div>

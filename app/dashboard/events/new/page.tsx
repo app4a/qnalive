@@ -53,7 +53,9 @@ export default function NewEventPage() {
         description: `Event created with code: ${data.eventCode}`,
       })
 
+      // Redirect to the new event and refresh to update the dashboard cache
       router.push(`/dashboard/events/${data.id}`)
+      router.refresh()
     } catch (error: any) {
       toast({
         variant: 'destructive',
