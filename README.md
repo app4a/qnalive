@@ -288,6 +288,76 @@ npm run build
 npm start
 ```
 
+## Testing
+
+This project includes comprehensive automated testing:
+
+### Quick Start
+
+```bash
+# Run all tests
+npm run test:all
+
+# Run unit/integration tests only
+npm test
+
+# Run E2E tests only
+npm run test:e2e
+
+# Run E2E tests with UI
+npm run test:e2e:ui
+
+# Run tests in watch mode
+npm test:watch
+```
+
+### Test Coverage
+
+- **44 E2E tests** covering:
+  - Event creation and management
+  - Question submission and upvoting
+  - Poll voting and results
+  - Moderation workflows
+  - Real-time updates
+  - Concurrency and race conditions
+  - Navigation flows
+  - Security and authorization
+
+- **Integration tests** for:
+  - API routes
+  - Database operations
+  - Data integrity checks
+  - Vote count consistency
+
+### Setting Up Tests
+
+1. **Copy test environment file:**
+```bash
+cp .env.test.example .env.test
+```
+
+2. **Update test database URL in .env.test**
+
+3. **Set up test database:**
+```bash
+npm run test:setup-db
+```
+
+4. **Run tests:**
+```bash
+npm run test:all
+```
+
+For detailed testing documentation, see [TESTING.md](./TESTING.md).
+
+### CI/CD
+
+Tests run automatically on:
+- Every push to `main` or `develop`
+- Every pull request
+
+View test results in GitHub Actions.
+
 ## Development
 
 ### Code Style
