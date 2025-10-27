@@ -208,6 +208,8 @@ model PollVote {
   
   createdAt   DateTime @default(now())
   
+  @@unique([pollId, userId])
+  @@unique([pollId, sessionId])
   @@index([pollId])
   @@index([optionId])
 }

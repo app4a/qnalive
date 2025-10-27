@@ -127,7 +127,10 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
       setTitle('')
       setType('MULTIPLE_CHOICE')
       setOptions(['', ''])
-      // Poll will appear via Socket.io event - no need to refresh
+      
+      // Refresh to revalidate Next.js cache
+      // This ensures the poll appears when navigating back to this page
+      router.refresh()
     } catch (error: any) {
       toast({
         variant: 'destructive',

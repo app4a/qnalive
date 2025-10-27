@@ -144,6 +144,9 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
         title: 'Poll updated',
         description: `Poll ${!isActive ? 'activated' : 'deactivated'}`,
       })
+
+      // Refresh to revalidate Next.js cache
+      router.refresh()
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -175,6 +178,9 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
         title: 'Poll deleted',
         description: 'Poll has been permanently deleted',
       })
+
+      // Refresh to revalidate Next.js cache
+      router.refresh()
     } catch (error: any) {
       toast({
         variant: 'destructive',

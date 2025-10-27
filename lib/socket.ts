@@ -7,9 +7,18 @@ export type SocketServer = SocketIOServer
 // Use global to persist across HMR in development
 const globalForSocket = globalThis as unknown as {
   io: SocketIOServer | undefined
+  participantCountTimeouts: Map<string, NodeJS.Timeout>
 }
 
 let io: SocketIOServer | undefined = globalForSocket.io
+
+// Debounce map for participant count broadcasts (fixes race condition)
+const participantCountTimeouts: Map<string, NodeJS.Timeout> = 
+  globalForSocket.participantCountTimeouts || new Map()
+
+if (!globalForSocket.participantCountTimeouts) {
+  globalForSocket.participantCountTimeouts = participantCountTimeouts
+}
 
 export const initSocket = (server: NetServer): SocketIOServer => {
   if (!io) {
@@ -68,11 +77,27 @@ export const initSocket = (server: NetServer): SocketIOServer => {
             })
           }
 
-          // Send participant count
-          const count = await prisma.eventParticipant.count({
-            where: { eventId },
-          })
-          io?.to(eventId).emit('event:participants', { count })
+          // Send participant count with debouncing to handle race conditions
+          // Clear any pending timeout for this event
+          const existingTimeout = participantCountTimeouts.get(eventId)
+          if (existingTimeout) {
+            clearTimeout(existingTimeout)
+          }
+
+          // Schedule participant count broadcast (debounced to 500ms)
+          const timeout = setTimeout(async () => {
+            try {
+              const count = await prisma.eventParticipant.count({
+                where: { eventId },
+              })
+              io?.to(eventId).emit('event:participants', { count })
+              participantCountTimeouts.delete(eventId)
+            } catch (error) {
+              console.error('Error broadcasting participant count:', error)
+            }
+          }, 500)
+
+          participantCountTimeouts.set(eventId, timeout)
         } catch (error) {
           console.error('Error joining event:', error)
           socket.emit('error', { message: 'Failed to join event' })
@@ -85,206 +110,33 @@ export const initSocket = (server: NetServer): SocketIOServer => {
         console.log(`Socket ${socket.id} left event ${eventId}`)
       })
 
-      // Handle question submission
-      socket.on('question:submit', async (data) => {
-        try {
-          const question = await prisma.question.create({
-            data: {
-              eventId: data.eventId,
-              content: data.content,
-              authorName: data.authorName,
-              authorId: data.userId,
-              status: data.status || 'APPROVED',
-            },
-            include: {
-              author: {
-                select: { id: true, name: true, image: true },
-              },
-              _count: {
-                select: { upvotes: true },
-              },
-            },
-          })
-
-          io?.to(data.eventId).emit('question:new', { question })
-        } catch (error) {
-          console.error('Error submitting question:', error)
-          socket.emit('error', { message: 'Failed to submit question' })
-        }
-      })
-
-      // Handle question upvote
-      socket.on('question:upvote', async (data) => {
-        try {
-          // Create upvote
-          if (data.userId) {
-            await prisma.questionUpvote.create({
-              data: {
-                questionId: data.questionId,
-                userId: data.userId,
-              },
-            })
-          } else if (data.sessionId) {
-            await prisma.questionUpvote.create({
-              data: {
-                questionId: data.questionId,
-                sessionId: data.sessionId,
-              },
-            })
-          }
-
-          // Update count
-          const updated = await prisma.question.update({
-            where: { id: data.questionId },
-            data: { upvotesCount: { increment: 1 } },
-          })
-
-          io?.to(data.eventId).emit('question:upvoted', {
-            questionId: data.questionId,
-            upvotesCount: updated.upvotesCount,
-          })
-        } catch (error) {
-          console.error('Error upvoting question:', error)
-          socket.emit('error', { message: 'Failed to upvote question' })
-        }
-      })
-
-      // Handle question updates (admin)
-      socket.on('question:update', async (data) => {
-        try {
-          const question = await prisma.question.update({
-            where: { id: data.questionId },
-            data: {
-              status: data.status,
-              isAnswered: data.isAnswered,
-              isArchived: data.isArchived,
-            },
-            include: {
-              author: {
-                select: { id: true, name: true, image: true },
-              },
-              _count: {
-                select: { upvotes: true },
-              },
-            },
-          })
-
-          io?.to(data.eventId).emit('question:updated', { question })
-        } catch (error) {
-          console.error('Error updating question:', error)
-          socket.emit('error', { message: 'Failed to update question' })
-        }
-      })
-
-      // Handle question deletion
-      socket.on('question:delete', async (data) => {
-        try {
-          await prisma.question.delete({
-            where: { id: data.questionId },
-          })
-
-          io?.to(data.eventId).emit('question:deleted', { questionId: data.questionId })
-        } catch (error) {
-          console.error('Error deleting question:', error)
-          socket.emit('error', { message: 'Failed to delete question' })
-        }
-      })
-
-      // Handle poll creation
-      socket.on('poll:create', async (data) => {
-        try {
-          const poll = await prisma.poll.create({
-            data: {
-              eventId: data.eventId,
-              createdById: data.userId,
-              title: data.title,
-              type: data.type,
-              allowMultipleVotes: data.allowMultipleVotes || false,
-              settings: data.settings || {},
-              options: {
-                create: data.options.map((optionText: string, index: number) => ({
-                  optionText,
-                  displayOrder: index,
-                })),
-              },
-            },
-            include: {
-              options: {
-                orderBy: { displayOrder: 'asc' },
-              },
-              createdBy: {
-                select: { id: true, name: true, image: true },
-              },
-            },
-          })
-
-          io?.to(data.eventId).emit('poll:new', { poll })
-        } catch (error) {
-          console.error('Error creating poll:', error)
-          socket.emit('error', { message: 'Failed to create poll' })
-        }
-      })
-
-      // Handle poll vote
-      socket.on('poll:vote', async (data) => {
-        try {
-          // Create vote
-          if (data.userId) {
-            await prisma.pollVote.create({
-              data: {
-                pollId: data.pollId,
-                optionId: data.optionId,
-                userId: data.userId,
-              },
-            })
-          } else if (data.sessionId) {
-            await prisma.pollVote.create({
-              data: {
-                pollId: data.pollId,
-                optionId: data.optionId,
-                sessionId: data.sessionId,
-              },
-            })
-          }
-
-          // Update count
-          await prisma.pollOption.update({
-            where: { id: data.optionId },
-            data: { votesCount: { increment: 1 } },
-          })
-
-          const option = await prisma.pollOption.findUnique({
-            where: { id: data.optionId },
-          })
-
-          io?.to(data.eventId).emit('poll:voted', {
-            pollId: data.pollId,
-            optionId: data.optionId,
-            votesCount: option?.votesCount,
-          })
-        } catch (error) {
-          console.error('Error voting on poll:', error)
-          socket.emit('error', { message: 'Failed to vote on poll' })
-        }
-      })
-
-      // Handle poll status change
-      socket.on('poll:status', async (data) => {
-        try {
-          await prisma.poll.update({
-            where: { id: data.pollId },
-            data: { isActive: data.isActive },
-          })
-
-          io?.to(data.eventId).emit('poll:status', {
-            pollId: data.pollId,
-            isActive: data.isActive,
-          })
-        } catch (error) {
-          console.error('Error updating poll status:', error)
-          socket.emit('error', { message: 'Failed to update poll status' })
-        }
-      })
+      // ============================================================
+      // REMOVED DEAD CODE: The following Socket.io event handlers
+      // were not used by any client code (all operations go through
+      // API routes instead). Removed for code clarity and to prevent
+      // confusion about which code path is actually used.
+      //
+      // Removed handlers:
+      // - question:submit
+      // - question:upvote
+      // - question:update
+      // - question:delete
+      // - poll:create
+      // - poll:vote
+      // - poll:status
+      //
+      // All these operations are handled by API routes:
+      // - POST /api/events/[eventId]/questions
+      // - POST /api/events/[eventId]/questions/[id]/upvote
+      // - PUT /api/events/[eventId]/questions/[id]
+      // - DELETE /api/events/[eventId]/questions/[id]
+      // - POST /api/events/[eventId]/polls
+      // - POST /api/events/[eventId]/polls/[id]/vote
+      // - PUT /api/events/[eventId]/polls/[id]
+      //
+      // Socket.io is used ONLY for broadcasting events after
+      // successful API operations, not for initiating them.
+      // ============================================================
 
       socket.on('disconnect', () => {
         console.log('Client disconnected:', socket.id)

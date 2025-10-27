@@ -49,95 +49,102 @@ export async function POST(
       )
     }
 
-    // Check if already voted (unless multiple votes allowed)
-    if (!poll.allowMultipleVotes) {
-      if (session?.user?.id) {
-        const existingVote = await prisma.pollVote.findFirst({
-          where: {
-            pollId: params.id,
-            userId: session.user.id,
-          },
-        })
+    const userId = session?.user?.id
 
-        if (existingVote) {
-          // If clicking the same option, allow unvoting
-          if (existingVote.optionId === optionId) {
-            return NextResponse.json(
-              { error: 'Already voted', allowUnvote: true },
-              { status: 400 }
-            )
-          }
-          return NextResponse.json(
-            { error: 'Already voted on a different option' },
-            { status: 400 }
-          )
-        }
-      } else if (sessionId) {
-        const existingVote = await prisma.pollVote.findFirst({
-          where: {
-            pollId: params.id,
-            sessionId: sessionId,
-          },
-        })
-
-        if (existingVote) {
-          // If clicking the same option, allow unvoting
-          if (existingVote.optionId === optionId) {
-            return NextResponse.json(
-              { error: 'Already voted', allowUnvote: true },
-              { status: 400 }
-            )
-          }
-          return NextResponse.json(
-            { error: 'Already voted on a different option' },
-            { status: 400 }
-          )
-        }
-      }
-    }
-
-    // Create vote
-    if (session?.user?.id) {
-      await prisma.pollVote.create({
-        data: {
-          pollId: params.id,
-          optionId: optionId,
-          userId: session.user.id,
-        },
-      })
-    } else if (sessionId) {
-      await prisma.pollVote.create({
-        data: {
-          pollId: params.id,
-          optionId: optionId,
-          sessionId: sessionId,
-        },
-      })
-    } else {
+    if (!userId && !sessionId) {
       return NextResponse.json(
         { error: 'User ID or Session ID required' },
         { status: 400 }
       )
     }
 
-    // Increment vote count
-    const updatedOption = await prisma.pollOption.update({
-      where: { id: optionId },
-      data: { votesCount: { increment: 1 } },
+    // Use transaction to ensure atomicity and prevent race conditions
+    const result = await prisma.$transaction(async (tx) => {
+      // Check if already voted (unless multiple votes allowed)
+      if (!poll.allowMultipleVotes) {
+        if (userId) {
+          const existingVote = await tx.pollVote.findFirst({
+            where: {
+              pollId: params.id,
+              userId: userId,
+            },
+          })
+
+          if (existingVote) {
+            // If clicking the same option, allow unvoting
+            if (existingVote.optionId === optionId) {
+              throw new Error('ALLOW_UNVOTE')
+            }
+            throw new Error('Already voted on a different option')
+          }
+        } else if (sessionId) {
+          const existingVote = await tx.pollVote.findFirst({
+            where: {
+              pollId: params.id,
+              sessionId: sessionId,
+            },
+          })
+
+          if (existingVote) {
+            // If clicking the same option, allow unvoting
+            if (existingVote.optionId === optionId) {
+              throw new Error('ALLOW_UNVOTE')
+            }
+            throw new Error('Already voted on a different option')
+          }
+        }
+      }
+
+      // Create vote - will fail with P2002 if duplicate due to unique constraint
+      try {
+        if (userId) {
+          await tx.pollVote.create({
+            data: {
+              pollId: params.id,
+              optionId: optionId,
+              userId: userId,
+            },
+          })
+        } else {
+          await tx.pollVote.create({
+            data: {
+              pollId: params.id,
+              optionId: optionId,
+              sessionId: sessionId!,
+            },
+          })
+        }
+      } catch (error: any) {
+        // P2002 is Prisma's unique constraint violation code
+        if (error.code === 'P2002') {
+          throw new Error('Already voted')
+        }
+        throw error
+      }
+
+      // Increment vote count atomically
+      const updatedOption = await tx.pollOption.update({
+        where: { id: optionId },
+        data: { votesCount: { increment: 1 } },
+      })
+
+      // Get updated poll with all votes
+      const updatedPoll = await tx.poll.findUnique({
+        where: { id: params.id },
+        include: {
+          options: {
+            orderBy: { displayOrder: 'asc' },
+          },
+          _count: {
+            select: { votes: true },
+          },
+        },
+      })
+
+      return { updatedOption, updatedPoll }
     })
 
-    // Get updated poll with all votes
-    const updatedPoll = await prisma.poll.findUnique({
-      where: { id: params.id },
-      include: {
-        options: {
-          orderBy: { displayOrder: 'asc' },
-        },
-        _count: {
-          select: { votes: true },
-        },
-      },
-    })
+    const { updatedOption, updatedPoll } = result
 
     // Emit Socket.io event for real-time updates
     try {
@@ -155,10 +162,24 @@ export async function POST(
     }
 
     return NextResponse.json(updatedPoll)
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Validation failed', details: error.errors },
+        { status: 400 }
+      )
+    }
+
+    if (error.message === 'ALLOW_UNVOTE') {
+      return NextResponse.json(
+        { error: 'Already voted', allowUnvote: true },
+        { status: 400 }
+      )
+    }
+
+    if (error.message === 'Already voted' || error.message === 'Already voted on a different option') {
+      return NextResponse.json(
+        { error: error.message },
         { status: 400 }
       )
     }
@@ -201,56 +222,64 @@ export async function DELETE(
       )
     }
 
-    // Find and delete the vote
-    let deletedVote
-    if (session?.user?.id) {
-      deletedVote = await prisma.pollVote.deleteMany({
-        where: {
-          pollId: params.id,
-          optionId: optionId,
-          userId: session.user.id,
-        },
-      })
-    } else if (sessionId) {
-      deletedVote = await prisma.pollVote.deleteMany({
-        where: {
-          pollId: params.id,
-          optionId: optionId,
-          sessionId: sessionId,
-        },
-      })
-    } else {
+    const userId = session?.user?.id
+
+    if (!userId && !sessionId) {
       return NextResponse.json(
         { error: 'User ID or Session ID required' },
         { status: 400 }
       )
     }
 
-    if (deletedVote.count === 0) {
-      return NextResponse.json(
-        { error: 'Vote not found' },
-        { status: 404 }
-      )
-    }
+    // Use transaction to ensure atomicity
+    const result = await prisma.$transaction(async (tx) => {
+      // Find and delete the vote
+      let deletedVote
+      if (userId) {
+        deletedVote = await tx.pollVote.deleteMany({
+          where: {
+            pollId: params.id,
+            optionId: optionId,
+            userId: userId,
+          },
+        })
+      } else {
+        deletedVote = await tx.pollVote.deleteMany({
+          where: {
+            pollId: params.id,
+            optionId: optionId,
+            sessionId: sessionId!,
+          },
+        })
+      }
 
-    // Decrement vote count
-    const updatedOption = await prisma.pollOption.update({
-      where: { id: optionId },
-      data: { votesCount: { decrement: 1 } },
+      if (deletedVote.count === 0) {
+        throw new Error('Vote not found')
+      }
+
+      // Decrement vote count atomically
+      const updatedOption = await tx.pollOption.update({
+        where: { id: optionId },
+        data: { votesCount: { decrement: 1 } },
+      })
+
+      // Get updated poll
+      const updatedPoll = await tx.poll.findUnique({
+        where: { id: params.id },
+        include: {
+          options: {
+            orderBy: { displayOrder: 'asc' },
+          },
+          _count: {
+            select: { votes: true },
+          },
+        },
+      })
+
+      return { updatedOption, updatedPoll }
     })
 
-    // Get updated poll
-    const updatedPoll = await prisma.poll.findUnique({
-      where: { id: params.id },
-      include: {
-        options: {
-          orderBy: { displayOrder: 'asc' },
-        },
-        _count: {
-          select: { votes: true },
-        },
-      },
-    })
+    const { updatedOption, updatedPoll } = result
 
     // Emit Socket.io event for real-time updates
     try {
@@ -268,7 +297,14 @@ export async function DELETE(
     }
 
     return NextResponse.json(updatedPoll)
-  } catch (error) {
+  } catch (error: any) {
+    if (error.message === 'Vote not found') {
+      return NextResponse.json(
+        { error: 'Vote not found' },
+        { status: 404 }
+      )
+    }
+
     console.error('Failed to remove vote:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
