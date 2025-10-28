@@ -88,7 +88,7 @@ export default function ForgotPasswordPage() {
                     If an account exists with <strong>{email}</strong>, you will receive a password reset link shortly.
                   </p>
                   <p className="mt-2 text-xs text-green-600">
-                    Didn't receive an email? Check your spam folder or try again.
+                    Didn&apos;t receive an email? Check your spam folder or try again.
                   </p>
                 </div>
                 

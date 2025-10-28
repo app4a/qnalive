@@ -36,7 +36,7 @@ export default async function EventAdminPage({ params }: { params: { eventId: st
           <CardHeader>
             <CardTitle>Event Not Found</CardTitle>
             <CardDescription>
-              The event you're looking for doesn't exist.
+              The event you&apos;re looking for doesn&apos;t exist.
             </CardDescription>
           </CardHeader>
           <CardContent>

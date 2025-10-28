@@ -138,7 +138,7 @@ export default function JoinEventPage() {
             </form>
             
             <div className="mt-6 text-center text-sm text-gray-600">
-              <p>Don't have a code?</p>
+              <p>Don&apos;t have a code?</p>
               <Link href="/auth/signup" className="text-primary hover:underline">
                 Create your own event
               </Link>

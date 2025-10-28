@@ -614,7 +614,7 @@ export default function ParticipantViewPage() {
           <CardHeader>
             <CardTitle>Event Not Found</CardTitle>
             <CardDescription>
-              The event you're looking for doesn't exist or is no longer active.
+              The event you&apos;re looking for doesn&apos;t exist or is no longer active.
             </CardDescription>
           </CardHeader>
         </Card>
@@ -778,7 +778,7 @@ export default function ParticipantViewPage() {
                     <p className="text-gray-600 mb-2">No active polls yet</p>
                     {currentUserId && (
                       <p className="text-sm text-gray-500">
-                        Click "Create Poll" above to create one
+                        Click &quot;Create Poll&quot; above to create one
                       </p>
                     )}
                   </CardContent>
@@ -907,7 +907,7 @@ export default function ParticipantViewPage() {
                     </div>
                     {isPending && (
                       <p className="text-xs text-center text-yellow-700 mt-4 bg-yellow-100 p-2 rounded">
-                        This poll is awaiting approval. You'll be able to vote once a moderator approves it.
+                        This poll is awaiting approval. You&apos;ll be able to vote once a moderator approves it.
                       </p>
                     )}
                     {!isPending && !showResults && (

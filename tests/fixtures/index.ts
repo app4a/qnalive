@@ -75,7 +75,8 @@ export async function createTestQuestion(
     authorId?: string | null
     authorName?: string | null
     sessionId?: string | null
-    status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'ARCHIVED'
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED'
+    isArchived?: boolean
   }
 ) {
   const timestamp = Date.now()
@@ -88,6 +89,7 @@ export async function createTestQuestion(
       authorName: data?.authorName !== undefined ? data.authorName : null,
       sessionId: data?.sessionId !== undefined ? data.sessionId : `session-${timestamp}`,
       status: data?.status || 'APPROVED',
+      isArchived: data?.isArchived || false,
       upvotesCount: 0,
     },
   })
