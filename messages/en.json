@@ -1,0 +1,552 @@
+{
+  "common": {
+    "appName": "QnALive",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "signUp": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "loading": "Loading...",
+    "submitting": "Submitting...",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting...",
+    "save": "Save",
+    "saving": "Saving...",
+    "edit": "Edit",
+    "create": "Create",
+    "creating": "Creating...",
+    "back": "Back",
+    "next": "Next",
+    "close": "Close",
+    "success": "Success",
+    "error": "Error",
+    "confirm": "Confirm",
+    "code": "Code",
+    "active": "Active",
+    "inactive": "Inactive",
+    "pending": "Pending",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "answered": "Answered",
+    "language": "Language",
+    "english": "English",
+    "korean": "한국어"
+  },
+  "landing": {
+    "header": {
+      "getStarted": "Get Started",
+      "dashboard": "Dashboard"
+    },
+    "hero": {
+      "title": "Engage Your Audience in Real-Time",
+      "subtitle": "Create interactive events with live Q&A, polls, and audience participation. Perfect for conferences, webinars, classrooms, and town halls.",
+      "createEvent": "Create Your Event",
+      "joinEvent": "Join an Event"
+    },
+    "features": {
+      "title": "Everything You Need for Interactive Events",
+      "liveQA": {
+        "title": "Live Q&A",
+        "description": "Collect and prioritize questions from your audience in real-time"
+      },
+      "livePolls": {
+        "title": "Live Polls",
+        "description": "Create instant polls and see results update live as votes come in"
+      },
+      "engagement": {
+        "title": "Audience Engagement",
+        "description": "Upvoting system helps surface the most popular questions"
+      },
+      "realtime": {
+        "title": "Real-Time Updates",
+        "description": "WebSocket-powered instant updates for all participants"
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "step1": {
+        "title": "Create Event",
+        "description": "Set up your event in seconds with a unique code"
+      },
+      "step2": {
+        "title": "Share Code",
+        "description": "Share the 6-character code with your audience"
+      },
+      "step3": {
+        "title": "Engage",
+        "description": "Collect questions, run polls, and interact in real-time"
+      }
+    },
+    "cta": {
+      "title": "Ready to Get Started?",
+      "subtitle": "Join thousands of event organizers using QnALive to create more engaging experiences",
+      "button": "Create Your Free Event"
+    },
+    "footer": {
+      "copyright": "© 2025 QnALive. Built with Next.js, TypeScript, and PostgreSQL."
+    }
+  },
+  "auth": {
+    "signin": {
+      "title": "Sign In",
+      "subtitle": "Sign in to your account to manage events",
+      "emailPlaceholder": "you@example.com",
+      "passwordPlaceholder": "••••••••",
+      "forgotPassword": "Forgot password?",
+      "signingIn": "Signing in...",
+      "button": "Sign In",
+      "orContinueWith": "Or continue with",
+      "google": "Google",
+      "github": "GitHub",
+      "noAccount": "Don't have an account? ",
+      "signUpLink": "Sign up",
+      "success": {
+        "title": "Success!",
+        "description": "Signed in successfully"
+      },
+      "error": {
+        "invalidCredentials": "Invalid email or password",
+        "somethingWrong": "Something went wrong"
+      }
+    },
+    "signup": {
+      "title": "Sign Up",
+      "subtitle": "Create an account to start hosting events",
+      "namePlaceholder": "John Doe",
+      "emailPlaceholder": "you@example.com",
+      "passwordPlaceholder": "••••••••",
+      "passwordHint": "Must be at least 6 characters",
+      "creatingAccount": "Creating account...",
+      "button": "Sign Up",
+      "orContinueWith": "Or continue with",
+      "google": "Google",
+      "github": "GitHub",
+      "haveAccount": "Already have an account? ",
+      "signInLink": "Sign in",
+      "success": {
+        "title": "Success!",
+        "description": "Account created successfully"
+      },
+      "error": {
+        "failedToCreate": "Failed to create account",
+        "failedToSignIn": "Failed to sign in"
+      }
+    },
+    "forgotPassword": {
+      "title": "Forgot Password?",
+      "subtitleBefore": "Enter your email address and we'll send you a link to reset your password",
+      "subtitleAfter": "Check your email for a reset link",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "you@example.com",
+      "sendingLink": "Sending...",
+      "button": "Send Reset Link",
+      "backToSignIn": "Back to Sign In",
+      "emailSent": "Email sent!",
+      "emailSentDesc": "If an account exists with",
+      "emailSentDesc2": "you will receive a password reset link shortly.",
+      "didntReceive": "Didn't receive an email? Check your spam folder or try again.",
+      "tryDifferent": "Try a different email",
+      "tooManyRequests": "Too Many Requests",
+      "success": {
+        "title": "Success!",
+        "description": "If an account exists with that email, you will receive a password reset link."
+      },
+      "error": {
+        "tooMany": "Too many requests. Please try again later.",
+        "somethingWrong": "Something went wrong"
+      }
+    },
+    "resetPassword": {
+      "title": "Reset Password",
+      "subtitle": "Enter your new password below",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm New Password",
+      "passwordPlaceholder": "••••••••",
+      "passwordHint": "Must be at least 6 characters",
+      "resetting": "Resetting...",
+      "button": "Reset Password",
+      "backToSignIn": "Back to Sign In",
+      "invalidLink": "Invalid Link",
+      "invalidLinkDesc": "This password reset link is invalid or has expired",
+      "requestNew": "Request New Reset Link",
+      "loading": "Loading...",
+      "success": {
+        "title": "Success!",
+        "description": "Your password has been reset. Redirecting to sign in..."
+      },
+      "error": {
+        "invalidLink": "Invalid reset link",
+        "passwordMismatch": "Passwords do not match",
+        "passwordTooShort": "Password must be at least 6 characters",
+        "somethingWrong": "Something went wrong"
+      }
+    }
+  },
+  "dashboard": {
+    "title": "My Events",
+    "subtitle": "Manage your interactive events and view analytics",
+    "newEvent": "New Event",
+    "noEvents": {
+      "title": "No events yet",
+      "description": "Create your first event to start engaging with your audience",
+      "button": "Create Your First Event"
+    },
+    "eventCard": {
+      "code": "Code",
+      "participants": "Participants",
+      "questions": "Questions",
+      "polls": "Polls",
+      "created": "Created"
+    }
+  },
+  "events": {
+    "create": {
+      "title": "Create New Event",
+      "subtitle": "Set up your interactive event and start engaging with your audience",
+      "eventTitle": "Event Title",
+      "eventTitlePlaceholder": "My Awesome Event",
+      "description": "Description",
+      "descriptionPlaceholder": "Tell your audience what this event is about...",
+      "settings": "Event Settings",
+      "allowAnonymous": "Allow Anonymous Questions",
+      "allowAnonymousHint": "Let participants ask questions without signing in",
+      "moderationEnabled": "Enable Question Moderation",
+      "moderationEnabledHint": "Review questions before they appear publicly",
+      "allowParticipantPolls": "Allow Participant Polls",
+      "allowParticipantPollsHint": "Let participants create their own polls",
+      "showResultsImmediately": "Show Poll Results Immediately",
+      "showResultsImmediatelyHint": "Show results before participants vote",
+      "button": "Create Event",
+      "creating": "Creating...",
+      "success": {
+        "title": "Event created!",
+        "description": "Your event is ready to go"
+      },
+      "error": {
+        "somethingWrong": "Something went wrong"
+      }
+    },
+    "manage": {
+      "tabs": {
+        "questions": "Questions",
+        "polls": "Polls",
+        "settings": "Settings"
+      },
+      "header": {
+        "participants": "participants",
+        "viewEvent": "View Event"
+      },
+      "eventCode": {
+        "title": "Event Code",
+        "description": "Share this code with participants to join your event",
+        "copied": "Copied",
+        "codeCopied": "Event code copied to clipboard",
+        "urlCopied": "Participant URL copied to clipboard",
+        "joinAt": "Join at",
+        "copyUrl": "Copy URL",
+        "copyCode": "Copy Code",
+        "openView": "Open View"
+      },
+      "createPoll": {
+        "button": "Create Poll",
+        "title": "Create New Poll",
+        "description": "Create a live poll for your event participants",
+        "pollQuestion": "Poll Question",
+        "pollQuestionPlaceholder": "What's your question?",
+        "pollQuestionHint": "Poll question must be between 5 and 255 characters",
+        "pollType": "Poll Type",
+        "types": {
+          "multipleChoice": "Multiple Choice",
+          "yesNo": "Yes/No",
+          "rating": "Rating (1-5)"
+        },
+        "options": "Options",
+        "optionPlaceholder": "Option {number}",
+        "addOption": "Add Option",
+        "optionsHint": "Add at least 2 options (up to 10 options)",
+        "autoYesNo": "Options: Yes, No (automatic)",
+        "autoRating": "Options: 1, 2, 3, 4, 5 (automatic)",
+        "creating": "Creating...",
+        "success": "Your poll has been created successfully",
+        "errors": {
+          "titleRequired": "Please enter a poll question",
+          "titleTooShort": "Poll question must be at least 5 characters",
+          "minOptions": "Please provide at least 2 options",
+          "failed": "Failed to create poll"
+        }
+      },
+      "delete": {
+        "button": "Delete Event",
+        "dialog": {
+          "title": "Are you absolutely sure?",
+          "description": "This will permanently delete",
+          "questions": "All questions and upvotes",
+          "polls": "All polls and votes",
+          "participants": "All participant data",
+          "warning": "This action cannot be undone."
+        },
+        "confirmButton": "Yes, delete event",
+        "deleting": "Deleting...",
+        "success": "\"{title}\" has been permanently deleted.",
+        "errors": {
+          "failed": "Failed to delete event"
+        }
+      }
+    },
+    "detail": {
+      "dashboard": "Dashboard",
+      "notFound": {
+        "title": "Event Not Found",
+        "description": "The event you're looking for doesn't exist.",
+        "backButton": "Back to Dashboard"
+      },
+      "stats": {
+        "participants": "Participants",
+        "activeParticipants": "Active participants",
+        "questions": "Questions",
+        "questionsSubmitted": "Questions submitted",
+        "polls": "Polls",
+        "pollsCreated": "Polls created"
+      },
+      "actions": {
+        "questions": {
+          "title": "Questions",
+          "description": "View and moderate questions from participants",
+          "button": "Manage Questions"
+        },
+        "polls": {
+          "title": "Polls",
+          "description": "Create and manage live polls for your event",
+          "button": "Manage Polls"
+        },
+        "settings": {
+          "title": "Settings",
+          "description": "Configure event settings and preferences",
+          "button": "Event Settings"
+        },
+        "participantView": {
+          "title": "Participant View",
+          "description": "See what participants see during the event",
+          "button": "Open Participant View"
+        }
+      },
+      "instructions": {
+        "title": "How to Run Your Event",
+        "step1": {
+          "title": "Share the Event Code",
+          "description": "Give participants the code",
+          "or": "or share the link:"
+        },
+        "step2": {
+          "title": "Monitor Participation",
+          "description": "Watch as participants join and submit questions. You can moderate questions if enabled."
+        },
+        "step3": {
+          "title": "Create Polls",
+          "description": "Launch live polls to gather instant feedback from your audience."
+        },
+        "step4": {
+          "title": "View Participant Screen",
+          "description": "Open the participant view in another window to see what your audience sees in real-time."
+        }
+      }
+    },
+    "questions": {
+      "title": "Questions",
+      "sortBy": {
+        "latest": "Latest First",
+        "votes": "Most Voted"
+      },
+      "noQuestions": "No questions yet",
+      "archived": "Question has been archived",
+      "unarchived": "Question has been restored",
+      "deleted": "Question has been permanently deleted",
+      "filters": {
+        "all": "All",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected",
+        "answered": "Answered",
+        "archived": "Archived"
+      },
+      "status": {
+        "pending": "Pending Review",
+        "rejected": "Rejected",
+        "answered": "Answered",
+        "archived": "Archived"
+      },
+      "by": "by",
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "markAnswered": "Mark as Answered",
+        "markUnanswered": "Mark as Unanswered",
+        "archive": "Archive",
+        "unarchive": "Unarchive",
+        "delete": "Delete",
+        "upvote": "Upvote this question",
+        "removeUpvote": "Remove upvote",
+        "cantUpvoteOwn": "You can't upvote your own question"
+      },
+      "deleteDialog": {
+        "title": "Delete Question?",
+        "description": "This will permanently delete this question. This action cannot be undone.",
+        "cancel": "Cancel",
+        "delete": "Delete",
+        "deleting": "Deleting..."
+      }
+    },
+    "polls": {
+      "title": "Polls",
+      "createPoll": "Create Poll",
+      "noPolls": "No polls yet",
+      "createHint": "Create a poll to get started",
+      "sortLatest": "Latest First",
+      "sortVoted": "Most Voted",
+      "createdBy": "Created by",
+      "votes": "votes",
+      "activated": "Poll activated",
+      "deactivated": "Poll deactivated",
+      "pollDeleted": "Poll has been permanently deleted",
+      "deleting": "Deleting...",
+      "types": {
+        "multipleChoice": "Multiple Choice",
+        "yesNo": "Yes/No",
+        "rating": "Rating",
+        "wordCloud": "Word Cloud"
+      },
+      "deleteDialog": {
+        "title": "Delete Poll?",
+        "description": "This will permanently delete this poll and all its votes. This action cannot be undone."
+      }
+    },
+    "settings": {
+      "title": "Event Settings",
+      "cardTitle": "Event Settings",
+      "cardDescription": "Configure your event settings and preferences",
+      "basicInfo": "Basic Information",
+      "eventTitle": "Event Title",
+      "eventTitlePlaceholder": "My Event",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional description for your event",
+      "eventStatus": "Event Status",
+      "eventActive": "Event Active",
+      "eventActiveHint": "When active, participants can join and submit questions",
+      "qaSettings": "Q&A Settings",
+      "allowAnonymous": "Allow Anonymous Questions",
+      "allowAnonymousHint": "If enabled, participants can submit questions without signing in. If disabled, only signed-in users can ask questions.",
+      "moderationEnabled": "Enable Question Moderation",
+      "moderationEnabledHint": "Review and approve questions before they appear publicly. Note: Disabling moderation will automatically approve all pending questions.",
+      "pollSettings": "Poll Settings",
+      "showResultsImmediately": "Show Results Immediately",
+      "showResultsImmediatelyHint": "Display poll results in real-time as votes come in",
+      "allowParticipantPolls": "Allow Participant Polls",
+      "allowParticipantPollsHint": "Let participants create their own polls (requires moderation)",
+      "saveButton": "Save Settings",
+      "success": "Your event settings have been saved",
+      "autoApprovedMessage": "Moderation disabled. {count} pending question(s) automatically approved and now visible to participants.",
+      "errors": {
+        "titleRequired": "Event title is required",
+        "failed": "Failed to update event settings"
+      }
+    }
+  },
+  "participant": {
+    "loading": "Loading event...",
+    "notFound": {
+      "title": "Event Not Found",
+      "description": "The event you're looking for doesn't exist or is no longer active."
+    },
+    "participants": "participants",
+    "askQuestion": "Ask a Question",
+    "signInRequired": "You must be signed in to ask questions at this event.",
+    "signInToAsk": "Sign In to Ask Questions",
+    "yourName": "Your Name (Optional)",
+    "anonymous": "Anonymous",
+    "question": "Question",
+    "questionPlaceholder": "Type your question here...",
+    "submitting": "Submitting...",
+    "submitQuestion": "Submit Question",
+    "questionPending": "Question submitted and pending review",
+    "questionSubmitted": "Question submitted successfully",
+    "questionDeleted": "Your question has been deleted",
+    "voteRemoved": "Your vote has been removed",
+    "voteSubmitted": "Your vote has been recorded",
+    "questionsTitle": "Questions ({count})",
+    "sortLatest": "Latest First",
+    "sortVoted": "Most Voted",
+    "noQuestions": "No questions yet. Be the first to ask!",
+    "by": "by",
+    "deleting": "Deleting...",
+    "polls": {
+      "title": "Active Polls",
+      "sortLatest": "Latest First",
+      "sortVotes": "Most Voted",
+      "createPoll": "Create Poll",
+      "noPolls": "No active polls yet",
+      "createPollHint": "Click \"Create Poll\" above to create one",
+      "by": "by",
+      "pendingApproval": "⏳ Pending approval from moderator",
+      "clickToRemove": "Click your vote to remove it",
+      "selectToVote": "Select an option to vote",
+      "voteToSee": "Vote to see results",
+      "confirmDelete": "Are you sure you want to delete this poll?",
+      "pollDeleted": "Your poll has been deleted",
+      "awaitingApproval": "This poll is awaiting approval. You'll be able to vote once a moderator approves it.",
+      "resultsAfterVote": "Results will be visible after you vote"
+    },
+    "createPollDialog": {
+      "title": "Create New Poll",
+      "description": "Create a poll for this event",
+      "pollTitle": "Poll Question",
+      "pollTitlePlaceholder": "What's your question?",
+      "pollTitleHint": "Poll question must be between 5 and 255 characters",
+      "pollType": "Poll Type",
+      "multipleChoice": "Multiple Choice",
+      "yesNo": "Yes/No",
+      "rating": "Rating (1-5)",
+      "options": "Options",
+      "optionPlaceholder": "Option {number}",
+      "addOption": "Add Option",
+      "optionsHint": "Add at least 2 options (up to 10 options)",
+      "yesNoHint": "Options: Yes, No (automatic)",
+      "ratingHint": "Options: 1, 2, 3, 4, 5 (automatic)",
+      "submit": "Create Poll"
+    },
+    "deleteDialog": {
+      "title": "Delete Question?",
+      "description": "This will permanently delete your question. This action cannot be undone."
+    },
+    "errors": {
+      "loadEvent": "Failed to load event",
+      "submitQuestion": "Failed to submit question",
+      "upvote": "Failed to upvote",
+      "deleteQuestion": "Failed to delete question",
+      "vote": "Failed to vote",
+      "deletePoll": "Failed to delete poll"
+    }
+  },
+  "join": {
+    "title": "Join an Event",
+    "subtitle": "Enter the 6-character event code",
+    "codePlaceholder": "ABC123",
+    "joining": "Joining...",
+    "button": "Join Event",
+    "noCode": "Don't have a code?",
+    "createOwn": "Create your own event",
+    "error": {
+      "notFound": "Event not found",
+      "somethingWrong": "Something went wrong"
+    }
+  },
+  "toast": {
+    "error": {
+      "title": "Error",
+      "description": "Something went wrong"
+    }
+  }
+}
+

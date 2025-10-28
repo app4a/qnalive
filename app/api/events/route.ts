@@ -29,6 +29,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    console.log('Creating event for user:', session.user.id, session.user.email)
+
+    // Verify user exists in database
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id }
+    })
+
+    if (!userExists) {
+      console.error('User not found in database:', session.user.id)
+      return NextResponse.json(
+        { error: 'User not found. Please sign out and sign in again.' },
+        { status: 403 }
+      )
+    }
+
     const body = await req.json()
     const validatedData = createEventSchema.parse(body)
 

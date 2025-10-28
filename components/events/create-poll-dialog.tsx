@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/select'
 import { Plus, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslations } from 'next-intl'
 
 interface CreatePollDialogProps {
   eventId: string
@@ -36,6 +37,8 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const t = useTranslations('events.manage.createPoll')
+  const tc = useTranslations('common')
 
   const handleAddOption = () => {
     if (options.length < 10) {
@@ -61,8 +64,8 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
     if (!title.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Please enter a poll question',
+        title: tc('error'),
+        description: t('errors.titleRequired'),
       })
       return
     }
@@ -70,8 +73,8 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
     if (title.trim().length < 5) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Poll question must be at least 5 characters',
+        title: tc('error'),
+        description: t('errors.titleTooShort'),
       })
       return
     }
@@ -87,8 +90,8 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
       if (pollOptions.length < 2) {
         toast({
           variant: 'destructive',
-          title: 'Error',
-          description: 'Please provide at least 2 options',
+          title: tc('error'),
+          description: t('errors.minOptions'),
         })
         return
       }
@@ -119,8 +122,8 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
       }
 
       toast({
-        title: 'Poll created',
-        description: 'Your poll has been created successfully',
+        title: tc('success'),
+        description: t('success'),
       })
 
       setOpen(false)
@@ -134,8 +137,8 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to create poll',
+        title: tc('error'),
+        description: error.message || t('errors.failed'),
       })
     } finally {
       setIsSubmitting(false)
@@ -147,25 +150,25 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <Plus className="h-4 w-4 mr-2" />
-          Create Poll
+          {t('button')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>Create New Poll</DialogTitle>
+            <DialogTitle>{t('title')}</DialogTitle>
             <DialogDescription>
-              Create a live poll for your event participants
+              {t('description')}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Poll Title */}
             <div className="space-y-2">
-              <Label htmlFor="title">Poll Question *</Label>
+              <Label htmlFor="title">{t('pollQuestion')} *</Label>
               <Input
                 id="title"
-                placeholder="What's your question?"
+                placeholder={t('pollQuestionPlaceholder')}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 minLength={5}
@@ -173,21 +176,21 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
                 required
               />
               <p className="text-xs text-gray-500">
-                Poll question must be between 5 and 255 characters
+                {t('pollQuestionHint')}
               </p>
             </div>
 
             {/* Poll Type */}
             <div className="space-y-2">
-              <Label htmlFor="type">Poll Type *</Label>
+              <Label htmlFor="type">{t('pollType')} *</Label>
               <Select value={type} onValueChange={(value: any) => setType(value)}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MULTIPLE_CHOICE">Multiple Choice</SelectItem>
-                  <SelectItem value="YES_NO">Yes/No</SelectItem>
-                  <SelectItem value="RATING">Rating (1-5)</SelectItem>
+                  <SelectItem value="MULTIPLE_CHOICE">{t('types.multipleChoice')}</SelectItem>
+                  <SelectItem value="YES_NO">{t('types.yesNo')}</SelectItem>
+                  <SelectItem value="RATING">{t('types.rating')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -195,12 +198,12 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
             {/* Options (only for Multiple Choice) */}
             {type === 'MULTIPLE_CHOICE' && (
               <div className="space-y-2">
-                <Label>Options *</Label>
+                <Label>{t('options')} *</Label>
                 <div className="space-y-2">
                   {options.map((option, index) => (
                     <div key={index} className="flex gap-2">
                       <Input
-                        placeholder={`Option ${index + 1}`}
+                        placeholder={t('optionPlaceholder', { number: index + 1 })}
                         value={option}
                         onChange={(e) => handleOptionChange(index, e.target.value)}
                         maxLength={100}
@@ -228,24 +231,24 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
                     className="w-full"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Option
+                    {t('addOption')}
                   </Button>
                 )}
                 <p className="text-xs text-gray-500">
-                  Add at least 2 options (up to 10 options)
+                  {t('optionsHint')}
                 </p>
               </div>
             )}
 
             {type === 'YES_NO' && (
               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                Options: Yes, No (automatic)
+                {t('autoYesNo')}
               </div>
             )}
 
             {type === 'RATING' && (
               <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                Options: 1, 2, 3, 4, 5 (automatic)
+                {t('autoRating')}
               </div>
             )}
           </div>
@@ -257,10 +260,10 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
               onClick={() => setOpen(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              {tc('cancel')}
             </Button>
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? 'Creating...' : 'Create Poll'}
+              {isSubmitting ? t('creating') : t('button')}
             </Button>
           </DialogFooter>
         </form>

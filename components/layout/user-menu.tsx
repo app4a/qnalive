@@ -1,7 +1,8 @@
 'use client'
 
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, Globe } from 'lucide-react'
 import { signOut } from 'next-auth/react'
+import { useTranslations } from 'next-intl'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { LanguageSwitcherMenu } from './language-switcher-menu'
 
 interface UserMenuProps {
   userName: string | null | undefined
@@ -17,6 +19,8 @@ interface UserMenuProps {
 }
 
 export function UserMenu({ userName, userEmail }: UserMenuProps) {
+  const t = useTranslations('common')
+  
   const handleSignOut = () => {
     signOut({ callbackUrl: '/' })
   }
@@ -43,12 +47,14 @@ export function UserMenu({ userName, userEmail }: UserMenuProps) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <LanguageSwitcherMenu />
+        <DropdownMenuSeparator />
         <DropdownMenuItem
           className="cursor-pointer text-red-600 focus:text-red-600"
           onClick={handleSignOut}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          <span>Sign Out</span>
+          <span>{t('signOut')}</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -26,6 +26,7 @@ import { useToast } from '@/hooks/use-toast'
 import { getSocket } from '@/lib/socket-client'
 import type { Socket } from 'socket.io-client'
 import { formatDateTime } from '@/lib/date-utils'
+import { useTranslations } from 'next-intl'
 
 interface Question {
   id: string
@@ -58,11 +59,26 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
   const [sortBy, setSortBy] = useState<'latest' | 'votes'>('latest')
   const router = useRouter()
   const { toast } = useToast()
+  const t = useTranslations('events.questions')
+  const tc = useTranslations('common')
+  const tCommon = useTranslations('common')
+
+  // Force refresh server data on mount and when navigating back
+  useEffect(() => {
+    router.refresh()
+  }, [router])
+
+  // Sync local state when server data changes (e.g., navigation back to page)
+  useEffect(() => {
+    setQuestions(initialQuestions)
+  }, [initialQuestions])
 
   // Set up Socket.io for real-time updates
   useEffect(() => {
     const socketInstance = getSocket()
     setSocket(socketInstance)
+
+    console.log('[Admin] Setting up socket connection for event:', eventId)
 
     // Join event room with userId if available (for admins)
     socketInstance.emit('event:join', { eventId, userId, sessionId: 'admin' })
@@ -185,8 +201,8 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update question',
+        title: tCommon('error'),
+        description: error.message,
       })
     }
   }
@@ -203,16 +219,16 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
 
       // Update will happen via Socket.io
       toast({
-        title: !isArchived ? 'Question archived' : 'Question unarchived',
-        description: !isArchived ? 'Question has been archived' : 'Question has been restored',
+        title: tCommon('success'),
+        description: !isArchived ? t('archived') : t('unarchived'),
       })
 
       router.refresh()
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update question',
+        title: tCommon('error'),
+        description: error.message,
       })
     }
   }
@@ -236,16 +252,16 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
       setQuestions(prev => prev.filter(q => q.id !== questionToDelete))
 
       toast({
-        title: 'Question deleted',
-        description: 'Question has been permanently deleted',
+        title: tCommon('success'),
+        description: t('deleted'),
       })
 
       router.refresh()
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to delete question',
+        title: tCommon('error'),
+        description: error.message,
       })
     } finally {
       setDeletingId(null)
@@ -257,11 +273,11 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'PENDING':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">Pending</Badge>
+        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">{tCommon('pending')}</Badge>
       case 'APPROVED':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Approved</Badge>
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">{tCommon('approved')}</Badge>
       case 'REJECTED':
-        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">Rejected</Badge>
+        return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">{tCommon('rejected')}</Badge>
       default:
         return null
     }
@@ -285,7 +301,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
     return (
       <div className="text-center py-12 text-gray-500">
         <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>No questions yet</p>
+        <p>{t('noQuestions')}</p>
       </div>
     )
   }
@@ -295,7 +311,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-semibold flex items-center">
           <MessageSquare className="h-5 w-5 mr-2" />
-          Questions ({questions.length})
+          {t('questionsCount', { count: questions.length })}
         </h2>
         <Select value={sortBy} onValueChange={(value: 'latest' | 'votes') => setSortBy(value)}>
           <SelectTrigger className="w-[180px]">
@@ -305,13 +321,13 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
             <SelectItem value="latest">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                <span>Latest First</span>
+                <span>{t('sortLatest')}</span>
               </div>
             </SelectItem>
             <SelectItem value="votes">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                <span>Most Voted</span>
+                <span>{t('sortVotes')}</span>
               </div>
             </SelectItem>
           </SelectContent>
@@ -341,7 +357,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                   <div className="flex-1">
                     <p className="text-lg mb-2">{question.content}</p>
                     <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span>by {question.authorName}</span>
+                      <span>{t('by')} {question.authorName}</span>
                       <span>•</span>
                       <span>{formatDateTime(question.createdAt)}</span>
                     </div>
@@ -350,14 +366,14 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                     {question.isArchived && (
                       <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300">
                         <Archive className="h-3 w-3 mr-1" />
-                        Archived
+                        {t('actions.archived')}
                       </Badge>
                     )}
                     {getStatusBadge(question.status)}
                     {question.isAnswered && (
                       <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
                         <CheckCircle className="h-3 w-3 mr-1" />
-                        Answered
+                        {tc('answered')}
                       </Badge>
                     )}
                   </div>
@@ -374,7 +390,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                         onClick={() => handleStatusChange(question.id, 'APPROVED')}
                       >
                         <Check className="h-4 w-4 mr-1" />
-                        Approve
+                        {t('actions.approve')}
                       </Button>
                       <Button
                         size="sm"
@@ -383,7 +399,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                         onClick={() => handleStatusChange(question.id, 'REJECTED')}
                       >
                         <X className="h-4 w-4 mr-1" />
-                        Reject
+                        {t('actions.reject')}
                       </Button>
                     </>
                   )}
@@ -397,7 +413,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                         onClick={() => handleStatusChange(question.id, 'PENDING')}
                       >
                         <X className="h-4 w-4 mr-1" />
-                        Unapprove
+                        {t('actions.unapprove')}
                       </Button>
                       <Button
                         size="sm"
@@ -405,7 +421,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                         onClick={() => handleToggleAnswered(question.id, question.isAnswered)}
                       >
                         <CheckCircle className="h-4 w-4 mr-1" />
-                        {question.isAnswered ? 'Mark Unanswered' : 'Mark Answered'}
+                        {question.isAnswered ? t('actions.markUnanswered') : t('actions.markAnswered')}
                       </Button>
                     </>
                   )}
@@ -418,7 +434,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                       onClick={() => handleStatusChange(question.id, 'APPROVED')}
                     >
                       <Check className="h-4 w-4 mr-1" />
-                      Approve
+                      {t('actions.approve')}
                     </Button>
                   )}
 
@@ -428,7 +444,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                     onClick={() => handleToggleArchive(question.id, question.isArchived)}
                   >
                     <Archive className="h-4 w-4 mr-1" />
-                    {question.isArchived ? 'Unarchive' : 'Archive'}
+                    {question.isArchived ? t('actions.unarchive') : t('actions.archive')}
                   </Button>
 
                   <Button
@@ -438,7 +454,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                     onClick={() => confirmDelete(question.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
+                    {tc('delete')}
                   </Button>
                 </div>
               </div>

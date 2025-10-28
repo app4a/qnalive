@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Switch } from '@/components/ui/switch'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2 } from 'lucide-react'
+import { useTranslations } from 'next-intl'
 
 interface Event {
   id: string
@@ -41,6 +42,8 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const t = useTranslations('events.settings')
+  const tc = useTranslations('common')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -48,8 +51,8 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
     if (!title.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Event title is required',
+        title: tc('error'),
+        description: t('errors.titleRequired'),
       })
       return
     }
@@ -88,13 +91,13 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
       // Show special message if questions were auto-approved
       if (data.autoApprovedCount && data.autoApprovedCount > 0) {
         toast({
-          title: 'Settings updated',
-          description: `Moderation disabled. ${data.autoApprovedCount} pending question${data.autoApprovedCount > 1 ? 's' : ''} automatically approved and now visible to participants.`,
+          title: tc('success'),
+          description: t('autoApprovedMessage', { count: data.autoApprovedCount }),
         })
       } else {
         toast({
-          title: 'Settings updated',
-          description: 'Your event settings have been saved',
+          title: tc('success'),
+          description: t('success'),
         })
       }
 
@@ -103,8 +106,8 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
       console.error('Failed to update event settings:', error)
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update settings',
+        title: tc('error'),
+        description: error.message || t('errors.failed'),
       })
     } finally {
       setIsSubmitting(false)
@@ -115,27 +118,27 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Basic Info */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Basic Information</h3>
+        <h3 className="text-lg font-semibold">{t('basicInfo')}</h3>
         
         <div className="space-y-2">
-          <Label htmlFor="title">Event Title *</Label>
+          <Label htmlFor="title">{t('eventTitle')} *</Label>
           <Input
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="My Event"
+            placeholder={t('eventTitlePlaceholder')}
             maxLength={255}
             required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="description">Description</Label>
+          <Label htmlFor="description">{t('description')}</Label>
           <Textarea
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Optional description for your event"
+            placeholder={t('descriptionPlaceholder')}
             rows={3}
           />
         </div>
@@ -143,13 +146,13 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
 
       {/* Event Status */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Event Status</h3>
+        <h3 className="text-lg font-semibold">{t('eventStatus')}</h3>
         
         <div className="flex items-center justify-between p-4 border rounded-lg">
           <div className="space-y-0.5">
-            <Label htmlFor="isActive">Event Active</Label>
+            <Label htmlFor="isActive">{t('eventActive')}</Label>
             <p className="text-sm text-gray-600">
-              When active, participants can join and submit questions
+              {t('eventActiveHint')}
             </p>
           </div>
           <Switch
@@ -162,13 +165,13 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
 
       {/* Q&A Settings */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Q&A Settings</h3>
+        <h3 className="text-lg font-semibold">{t('qaSettings')}</h3>
 
         <div className="flex items-center justify-between p-4 border rounded-lg">
           <div className="space-y-0.5">
-            <Label htmlFor="allowAnonymous">Allow Anonymous Questions</Label>
+            <Label htmlFor="allowAnonymous">{t('allowAnonymous')}</Label>
             <p className="text-sm text-gray-600">
-              If enabled, participants can submit questions without signing in. If disabled, only signed-in users can ask questions.
+              {t('allowAnonymousHint')}
             </p>
           </div>
           <Switch
@@ -180,9 +183,9 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
 
         <div className="flex items-center justify-between p-4 border rounded-lg">
           <div className="space-y-0.5">
-            <Label htmlFor="moderationEnabled">Enable Question Moderation</Label>
+            <Label htmlFor="moderationEnabled">{t('moderationEnabled')}</Label>
             <p className="text-sm text-gray-600">
-              Review and approve questions before they appear publicly. Note: Disabling moderation will automatically approve all pending questions.
+              {t('moderationEnabledHint')}
             </p>
           </div>
           <Switch
@@ -195,13 +198,13 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
 
       {/* Poll Settings */}
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Poll Settings</h3>
+        <h3 className="text-lg font-semibold">{t('pollSettings')}</h3>
 
         <div className="flex items-center justify-between p-4 border rounded-lg">
           <div className="space-y-0.5">
-            <Label htmlFor="showResultsImmediately">Show Results Immediately</Label>
+            <Label htmlFor="showResultsImmediately">{t('showResultsImmediately')}</Label>
             <p className="text-sm text-gray-600">
-              Display poll results in real-time as votes come in
+              {t('showResultsImmediatelyHint')}
             </p>
           </div>
           <Switch
@@ -213,9 +216,9 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
 
         <div className="flex items-center justify-between p-4 border rounded-lg">
           <div className="space-y-0.5">
-            <Label htmlFor="allowParticipantPolls">Allow Participant Polls</Label>
+            <Label htmlFor="allowParticipantPolls">{t('allowParticipantPolls')}</Label>
             <p className="text-sm text-gray-600">
-              Let participants create their own polls (requires moderation)
+              {t('allowParticipantPollsHint')}
             </p>
           </div>
           <Switch
@@ -230,7 +233,7 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
       <div className="flex justify-end pt-4 border-t">
         <Button type="submit" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-          {isSubmitting ? 'Saving...' : 'Save Settings'}
+          {isSubmitting ? tc('saving') : t('saveButton')}
         </Button>
       </div>
     </form>

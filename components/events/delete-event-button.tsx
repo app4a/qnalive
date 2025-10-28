@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { useTranslations } from 'next-intl'
 
 interface DeleteEventButtonProps {
   eventId: string
@@ -26,6 +27,8 @@ export function DeleteEventButton({ eventId, eventTitle }: DeleteEventButtonProp
   const [isDeleting, setIsDeleting] = useState(false)
   const router = useRouter()
   const { toast } = useToast()
+  const t = useTranslations('events.manage.delete')
+  const tc = useTranslations('common')
 
   const handleDelete = async () => {
     setIsDeleting(true)
@@ -40,8 +43,8 @@ export function DeleteEventButton({ eventId, eventTitle }: DeleteEventButtonProp
       }
 
       toast({
-        title: 'Event deleted',
-        description: `"${eventTitle}" has been permanently deleted.`,
+        title: tc('success'),
+        description: t('success', { title: eventTitle }),
       })
 
       router.push('/dashboard')
@@ -49,8 +52,8 @@ export function DeleteEventButton({ eventId, eventTitle }: DeleteEventButtonProp
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to delete event',
+        title: tc('error'),
+        description: error.message || t('errors.failed'),
       })
       setIsDeleting(false)
     }
@@ -61,30 +64,30 @@ export function DeleteEventButton({ eventId, eventTitle }: DeleteEventButtonProp
       <AlertDialogTrigger asChild>
         <Button variant="destructive" size="sm">
           <Trash2 className="h-4 w-4 mr-2" />
-          Delete Event
+          {t('button')}
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle>{t('dialog.title')}</AlertDialogTitle>
           <AlertDialogDescription>
-            This will permanently delete <strong>{eventTitle}</strong> and all associated data including:
+            {t('dialog.description', { title: eventTitle })} <strong>{eventTitle}</strong>
             <ul className="list-disc list-inside mt-2 space-y-1">
-              <li>All questions and upvotes</li>
-              <li>All polls and votes</li>
-              <li>All participant data</li>
+              <li>{t('dialog.questions')}</li>
+              <li>{t('dialog.polls')}</li>
+              <li>{t('dialog.participants')}</li>
             </ul>
-            <p className="mt-2 font-semibold text-red-600">This action cannot be undone.</p>
+            <p className="mt-2 font-semibold text-red-600">{t('dialog.warning')}</p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isDeleting}>{tc('cancel')}</AlertDialogCancel>
           <AlertDialogAction
             onClick={handleDelete}
             disabled={isDeleting}
             className="bg-red-600 hover:bg-red-700"
           >
-            {isDeleting ? 'Deleting...' : 'Yes, delete event'}
+            {isDeleting ? t('deleting') : t('confirmButton')}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

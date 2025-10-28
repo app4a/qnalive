@@ -27,6 +27,7 @@ import { useToast } from '@/hooks/use-toast'
 import { getSocket } from '@/lib/socket-client'
 import type { Socket } from 'socket.io-client'
 import { formatDateTime } from '@/lib/date-utils'
+import { useTranslations } from 'next-intl'
 
 interface PollOption {
   id: string
@@ -66,11 +67,25 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
   const [sortBy, setSortBy] = useState<'latest' | 'votes'>('latest')
   const router = useRouter()
   const { toast } = useToast()
+  const t = useTranslations('events.polls')
+  const tc = useTranslations('common')
+
+  // Force refresh server data on mount and when navigating back
+  useEffect(() => {
+    router.refresh()
+  }, [router])
+
+  // Sync local state when server data changes (e.g., navigation back to page)
+  useEffect(() => {
+    setPolls(initialPolls)
+  }, [initialPolls])
 
   // Set up Socket.io for real-time updates
   useEffect(() => {
     const socketInstance = getSocket()
     setSocket(socketInstance)
+
+    console.log('[Admin] Setting up socket connection for polls, event:', eventId)
 
     // Join event room (admin context)
     socketInstance.emit('event:join', { eventId, sessionId: 'admin' })
@@ -141,8 +156,8 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
       )
 
       toast({
-        title: 'Poll updated',
-        description: `Poll ${!isActive ? 'activated' : 'deactivated'}`,
+        title: tc('success'),
+        description: !isActive ? t('activated') : t('deactivated'),
       })
 
       // Refresh to revalidate Next.js cache
@@ -150,8 +165,8 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update poll',
+        title: tc('error'),
+        description: error.message,
       })
     }
   }
@@ -175,8 +190,8 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
       setPolls(prev => prev.filter(p => p.id !== pollToDelete))
 
       toast({
-        title: 'Poll deleted',
-        description: 'Poll has been permanently deleted',
+        title: tc('success'),
+        description: t('pollDeleted'),
       })
 
       // Refresh to revalidate Next.js cache
@@ -184,8 +199,8 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to delete poll',
+        title: tc('error'),
+        description: error.message,
       })
     } finally {
       setDeletingId(null)
@@ -197,13 +212,13 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
   const getPollTypeLabel = (type: string) => {
     switch (type) {
       case 'MULTIPLE_CHOICE':
-        return 'Multiple Choice'
+        return t('types.multipleChoice')
       case 'YES_NO':
-        return 'Yes/No'
+        return t('types.yesNo')
       case 'RATING':
-        return 'Rating'
+        return t('types.rating')
       case 'WORD_CLOUD':
-        return 'Word Cloud'
+        return t('types.wordCloud')
       default:
         return type
     }
@@ -229,8 +244,8 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
     return (
       <div className="text-center py-12 text-gray-500">
         <BarChart3 className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>No polls yet</p>
-        <p className="text-sm mt-2">Create a poll to get started</p>
+        <p>{t('noPolls')}</p>
+        <p className="text-sm mt-2">{t('createHint')}</p>
       </div>
     )
   }
@@ -240,7 +255,7 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-lg font-semibold flex items-center">
           <BarChart3 className="h-5 w-5 mr-2" />
-          Polls ({polls.length})
+          {t('title')} ({polls.length})
         </h2>
         <Select value={sortBy} onValueChange={(value: 'latest' | 'votes') => setSortBy(value)}>
           <SelectTrigger className="w-[180px]">
@@ -250,13 +265,13 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
             <SelectItem value="latest">
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4" />
-                <span>Latest First</span>
+                <span>{t('sortLatest')}</span>
               </div>
             </SelectItem>
             <SelectItem value="votes">
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                <span>Most Voted</span>
+                <span>{t('sortVoted')}</span>
               </div>
             </SelectItem>
           </SelectContent>
@@ -279,19 +294,19 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Badge variant="outline">{getPollTypeLabel(poll.type)}</Badge>
                     <span>•</span>
-                    <span>Created by: {poll.createdBy?.name || 'Unknown'}</span>
+                    <span>{t('createdBy')}: {poll.createdBy?.name || tc('unknown')}</span>
                     <span>•</span>
-                    <span>{totalVotes} votes</span>
+                    <span>{totalVotes} {t('votes')}</span>
                     <span>•</span>
                     <span>{formatDateTime(poll.createdAt)}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   {poll.isActive && (
-                    <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>
+                    <Badge className="bg-green-100 text-green-800 border-green-200">{tc('active')}</Badge>
                   )}
                   {!poll.isActive && (
-                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">Pending</Badge>
+                    <Badge className="bg-yellow-100 text-yellow-800 border-yellow-200">{tc('pending')}</Badge>
                   )}
                 </div>
               </div>
@@ -328,7 +343,7 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
                     onCheckedChange={() => handleToggleActive(poll.id, poll.isActive)}
                   />
                   <span className="text-sm text-gray-600">
-                    {poll.isActive ? 'Active' : 'Inactive'}
+                    {poll.isActive ? tc('active') : tc('inactive')}
                   </span>
                 </div>
 
@@ -340,7 +355,7 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
                     onClick={() => confirmDelete(poll.id)}
                   >
                     <Trash2 className="h-4 w-4 mr-1" />
-                    Delete
+                    {tc('delete')}
                   </Button>
                 </div>
               </div>
@@ -353,20 +368,19 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Poll?</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete this poll and all its votes.
-              This action cannot be undone.
+              {t('deleteDialog.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={!!deletingId}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={!!deletingId}>{tc('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={!!deletingId}
               className="bg-red-600 hover:bg-red-700"
             >
-              {deletingId ? 'Deleting...' : 'Delete'}
+              {deletingId ? t('deleting') : tc('delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
