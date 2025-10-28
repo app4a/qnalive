@@ -67,6 +67,17 @@ model Session {
   @@index([userId])
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+  
+  @@index([email])
+  @@index([token])
+}
+
 // Main event/presentation entity
 model Event {
   id          String   @id @default(cuid())
