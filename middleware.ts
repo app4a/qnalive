@@ -18,10 +18,10 @@ export default auth(async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all pathnames except for
-    // - api routes
+    // - non-auth api routes (but include /api/auth/*)
     // - _next (Next.js internals)
     // - static files
-    '/((?!api|_next/static|_next/image|favicon.ico|socketio).*)',
+    '/((?!api/(?!auth)|_next/static|_next/image|favicon.ico|socketio).*)',
   ],
 };
 
