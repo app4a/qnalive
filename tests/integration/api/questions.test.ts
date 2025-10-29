@@ -65,7 +65,7 @@ describe('Questions API', () => {
     
     it('should set status to PENDING in moderated event', async () => {
       const moderatedEvent = await createTestEvent(testUser.id, {
-        enableQuestionModeration: true,
+        moderationEnabled: true,
       })
       
       const question = await createTestQuestion(moderatedEvent.id, {

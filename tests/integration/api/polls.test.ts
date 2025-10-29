@@ -5,7 +5,6 @@
  */
 
 import { createTestUser, createTestEvent, createTestPoll, createPollVote, cleanupTestData, prisma } from '../../fixtures'
-import { ModerationStatus } from '@prisma/client'
 
 describe('Polls API', () => {
   let testUser: any
