@@ -63,7 +63,18 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user
-      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard')
+      const pathname = nextUrl.pathname
+      
+      // Extract pathname without locale prefix
+      const pathWithoutLocale = pathname.replace(/^\/(en|ko)/, '') || '/'
+      
+      // Don't protect auth pages (allow access)
+      if (pathWithoutLocale.startsWith('/auth/')) {
+        return true
+      }
+      
+      // Protect dashboard routes
+      const isOnDashboard = pathWithoutLocale.startsWith('/dashboard')
       
       if (isOnDashboard) {
         if (isLoggedIn) return true
