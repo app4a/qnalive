@@ -47,6 +47,17 @@ CREATE TABLE "Session" (
 );
 
 -- CreateTable
+CREATE TABLE "PasswordResetToken" (
+    "id" TEXT NOT NULL,
+    "email" TEXT NOT NULL,
+    "token" TEXT NOT NULL,
+    "expires" TIMESTAMP(3) NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT "PasswordResetToken_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "Event" (
     "id" TEXT NOT NULL,
     "ownerId" TEXT NOT NULL,
@@ -161,6 +172,15 @@ CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
 
 -- CreateIndex
 CREATE INDEX "Session_userId_idx" ON "Session"("userId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "PasswordResetToken_token_key" ON "PasswordResetToken"("token");
+
+-- CreateIndex
+CREATE INDEX "PasswordResetToken_email_idx" ON "PasswordResetToken"("email");
+
+-- CreateIndex
+CREATE INDEX "PasswordResetToken_token_idx" ON "PasswordResetToken"("token");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Event_eventCode_key" ON "Event"("eventCode");
