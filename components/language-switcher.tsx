@@ -2,14 +2,14 @@
 
 import { Globe } from 'lucide-react'
 import { useLocale } from 'next-intl'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname, useRouter } from '@/navigation'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { locales, localeLabels, defaultLocale, type Locale } from '@/i18n'
+import { locales, localeLabels, type Locale } from '@/i18n'
 
 export function LanguageSwitcher() {
   const locale = useLocale()
@@ -19,21 +19,8 @@ export function LanguageSwitcher() {
   const switchLocale = (newLocale: Locale) => {
     if (newLocale === locale) return
 
-    // Remove the current locale prefix from the pathname if it exists
-    let newPathname = pathname
-    for (const loc of locales) {
-      if (pathname.startsWith(`/${loc}`)) {
-        newPathname = pathname.slice(`/${loc}`.length) || '/'
-        break
-      }
-    }
-
-    // Add the new locale prefix (unless it's the default locale)
-    if (newLocale !== defaultLocale) {
-      newPathname = `/${newLocale}${newPathname}`
-    }
-
-    router.push(newPathname)
+    // Use next-intl's router to switch locale
+    router.replace(pathname, { locale: newLocale })
     router.refresh()
   }
 

@@ -10,33 +10,19 @@ const handleI18nRouting = createMiddleware({
   localePrefix: 'as-needed',
 });
 
+// Chain i18n and auth middleware
 export default auth(async function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
-  
-  // Skip i18n processing for API routes (including /api/auth/*)
-  // API routes should never have locale prefixes
-  if (pathname.startsWith('/api/')) {
-    return;
-  }
-  
-  // Handle i18n routing for all other routes
-  const i18nResponse = handleI18nRouting(request);
-  
-  // If i18n middleware returned a response (redirect/rewrite), return it
-  if (i18nResponse) {
-    return i18nResponse;
-  }
-  
-  // Continue with normal flow (auth checks happen via the auth() wrapper)
-  return;
+  // Run i18n routing and return its response
+  return handleI18nRouting(request);
 });
 
 export const config = {
   matcher: [
     // Match all pathnames except for
-    // - _next (Next.js internals)
+    // - API routes (handled separately)
+    // - _next (Next.js internals)  
     // - static files
-    '/((?!_next/static|_next/image|favicon.ico|.*\\..*|socketio).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|socketio).*)',
   ],
 };
 

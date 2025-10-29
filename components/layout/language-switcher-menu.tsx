@@ -22,6 +22,7 @@ export function LanguageSwitcherMenu() {
 
     // Use next-intl's router to switch locale
     router.replace(pathname, { locale: newLocale })
+    router.refresh()
   }
 
   return (

@@ -31,6 +31,7 @@
     "approved": "승인됨",
     "rejected": "거부됨",
     "answered": "답변됨",
+    "pendingReview": "검토 대기 중",
     "language": "언어",
     "english": "English",
     "korean": "한국어"

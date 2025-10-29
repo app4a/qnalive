@@ -31,6 +31,7 @@
     "approved": "Approved",
     "rejected": "Rejected",
     "answered": "Answered",
+    "pendingReview": "Pending Review",
     "language": "Language",
     "english": "English",
     "korean": "한국어"
@@ -356,6 +357,9 @@
     },
     "questions": {
       "title": "Questions",
+      "questionsCount": "Questions ({count})",
+      "sortLatest": "Latest First",
+      "sortVotes": "Most Voted",
       "sortBy": {
         "latest": "Latest First",
         "votes": "Most Voted"
@@ -382,10 +386,12 @@
       "actions": {
         "approve": "Approve",
         "reject": "Reject",
+        "unapprove": "Unapprove",
         "markAnswered": "Mark as Answered",
         "markUnanswered": "Mark as Unanswered",
         "archive": "Archive",
         "unarchive": "Unarchive",
+        "archived": "Archived",
         "delete": "Delete",
         "upvote": "Upvote this question",
         "removeUpvote": "Remove upvote",
