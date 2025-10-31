@@ -4,8 +4,7 @@ import { Link } from '@/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, BarChart3, Users, Zap } from 'lucide-react'
-import { UserMenu } from '@/components/layout/user-menu'
-import { LanguageSwitcher } from '@/components/language-switcher'
+import { AppHeader } from '@/components/layout/app-header'
 import { useTranslations } from 'next-intl'
 
 interface LandingPageContentProps {
@@ -18,35 +17,7 @@ export default function LandingPageContent({ session }: LandingPageContentProps)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <MessageSquare className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">{tCommon('appName')}</span>
-          </Link>
-          <nav className="flex items-center space-x-4">
-            {session?.user ? (
-              <>
-                <UserMenu userName={session.user.name} userEmail={session.user.email} />
-                <Link href="/dashboard">
-                  <Button>{t('header.dashboard')}</Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <LanguageSwitcher />
-                <Link href="/auth/signin">
-                  <Button variant="ghost">{tCommon('signIn')}</Button>
-                </Link>
-                <Link href="/auth/signup">
-                  <Button>{t('header.getStarted')}</Button>
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
+      <AppHeader session={session} showDashboardButton={true} showLanguageSwitcher={true} />
 
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">

@@ -308,13 +308,13 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center">
-          <MessageSquare className="h-5 w-5 mr-2" />
+      <div className="mb-4 md:mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h2 className="text-base md:text-lg font-semibold flex items-center">
+          <MessageSquare className="h-4 w-4 md:h-5 md:w-5 mr-2" />
           {t('questionsCount', { count: questions.length })}
         </h2>
         <Select value={sortBy} onValueChange={(value: 'latest' | 'votes') => setSortBy(value)}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -333,73 +333,92 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {sortedQuestions.map((question) => (
           <div
             key={question.id}
-            className={`border rounded-lg p-4 ${
+            className={`border rounded-lg p-3 md:p-4 ${
               question.isArchived ? 'bg-gray-50 border-gray-300 opacity-75' :
               question.isAnswered ? 'bg-green-50 border-green-200' : 'bg-white'
             }`}
           >
-            <div className="flex gap-4">
+            <div className="flex gap-2 md:gap-4">
               {/* Upvote Count */}
-              <div className="flex flex-col items-center justify-start min-w-[60px]">
-                <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-100">
-                  <ArrowUp className="h-4 w-4 text-gray-600" />
+              <div className="flex flex-col items-center justify-start min-w-[50px] md:min-w-[60px] flex-shrink-0">
+                <div className="flex items-center justify-center w-8 h-8 md:w-10 md:h-10 rounded-full bg-gray-100">
+                  <ArrowUp className="h-3 w-3 md:h-4 md:w-4 text-gray-600" />
                 </div>
-                <span className="text-sm font-semibold mt-1">{question.upvotesCount}</span>
+                <span className="text-xs md:text-sm font-semibold mt-1">{question.upvotesCount}</span>
               </div>
 
               {/* Question Content */}
-              <div className="flex-1">
-                <div className="flex items-start justify-between mb-2">
-                  <div className="flex-1">
-                    <p className="text-lg mb-2">{question.content}</p>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span>{t('by')} {question.authorName}</span>
-                      <span>•</span>
-                      <span>{formatDateTime(question.createdAt)}</span>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm md:text-lg mb-2 break-words">{question.content}</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-xs md:text-sm text-gray-600">
+                      <span className="truncate">{t('by')} {question.authorName}</span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="text-xs">{formatDateTime(question.createdAt)}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  
+                  {/* Badges - top right on large screens, below text on mobile */}
+                  <div className="hidden md:flex flex-wrap items-center gap-1.5 flex-shrink-0">
                     {question.isArchived && (
-                      <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300">
+                      <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">
                         <Archive className="h-3 w-3 mr-1" />
                         {t('actions.archived')}
                       </Badge>
                     )}
                     {getStatusBadge(question.status)}
                     {question.isAnswered && (
-                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                      <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         {tc('answered')}
                       </Badge>
                     )}
                   </div>
                 </div>
+                
+                {/* Badges for mobile - below content */}
+                <div className="flex md:hidden flex-wrap items-center gap-1.5 mb-3">
+                  {question.isArchived && (
+                    <Badge variant="outline" className="bg-gray-100 text-gray-700 border-gray-300 text-xs">
+                      <Archive className="h-3 w-3 mr-1" />
+                      {t('actions.archived')}
+                    </Badge>
+                  )}
+                  {getStatusBadge(question.status)}
+                  {question.isAnswered && (
+                    <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      {tc('answered')}
+                    </Badge>
+                  )}
+                </div>
 
                 {/* Actions */}
-                <div className="flex flex-wrap gap-2 mt-3">
+                <div className="flex flex-wrap gap-1.5 md:gap-2">
                   {question.status === 'PENDING' && (
                     <>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-green-600 border-green-600 hover:bg-green-50"
+                        className="text-green-600 border-green-600 hover:bg-green-50 text-xs md:text-sm h-8 md:px-3 px-2"
                         onClick={() => handleStatusChange(question.id, 'APPROVED')}
                       >
-                        <Check className="h-4 w-4 mr-1" />
-                        {t('actions.approve')}
+                        <Check className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                        <span className="hidden md:inline ml-1">{t('actions.approve')}</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-red-600 border-red-600 hover:bg-red-50"
+                        className="text-red-600 border-red-600 hover:bg-red-50 text-xs md:text-sm h-8 md:px-3 px-2"
                         onClick={() => handleStatusChange(question.id, 'REJECTED')}
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        {t('actions.reject')}
+                        <X className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                        <span className="hidden md:inline ml-1">{t('actions.reject')}</span>
                       </Button>
                     </>
                   )}
@@ -409,19 +428,20 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-yellow-600 border-yellow-600 hover:bg-yellow-50"
+                        className="text-yellow-600 border-yellow-600 hover:bg-yellow-50 text-xs md:text-sm h-8 md:px-3 px-2"
                         onClick={() => handleStatusChange(question.id, 'PENDING')}
                       >
-                        <X className="h-4 w-4 mr-1" />
-                        {t('actions.unapprove')}
+                        <X className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                        <span className="hidden md:inline ml-1">{t('actions.unapprove')}</span>
                       </Button>
                       <Button
                         size="sm"
                         variant="outline"
+                        className="text-xs md:text-sm h-8 md:px-3 px-2"
                         onClick={() => handleToggleAnswered(question.id, question.isAnswered)}
                       >
-                        <CheckCircle className="h-4 w-4 mr-1" />
-                        {question.isAnswered ? t('actions.markUnanswered') : t('actions.markAnswered')}
+                        <CheckCircle className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                        <span className="hidden md:inline ml-1">{question.isAnswered ? t('actions.markUnanswered') : t('actions.markAnswered')}</span>
                       </Button>
                     </>
                   )}
@@ -430,31 +450,32 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-green-600 border-green-600 hover:bg-green-50"
+                      className="text-green-600 border-green-600 hover:bg-green-50 text-xs md:text-sm h-8 md:px-3 px-2"
                       onClick={() => handleStatusChange(question.id, 'APPROVED')}
                     >
-                      <Check className="h-4 w-4 mr-1" />
-                      {t('actions.approve')}
+                      <Check className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                      <span className="hidden md:inline ml-1">{t('actions.approve')}</span>
                     </Button>
                   )}
 
                   <Button
                     size="sm"
                     variant="outline"
+                    className="text-xs md:text-sm h-8 md:px-3 px-2"
                     onClick={() => handleToggleArchive(question.id, question.isArchived)}
                   >
-                    <Archive className="h-4 w-4 mr-1" />
-                    {question.isArchived ? t('actions.unarchive') : t('actions.archive')}
+                    <Archive className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                    <span className="hidden md:inline ml-1">{question.isArchived ? t('actions.unarchive') : t('actions.archive')}</span>
                   </Button>
 
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-red-600 border-red-600 hover:bg-red-50"
+                    className="text-red-600 border-red-600 hover:bg-red-50 text-xs md:text-sm h-8 md:px-3 px-2"
                     onClick={() => confirmDelete(question.id)}
                   >
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    {tc('delete')}
+                    <Trash2 className="h-3 w-3 md:h-4 md:w-4 md:mr-1" />
+                    <span className="hidden md:inline ml-1">{tc('delete')}</span>
                   </Button>
                 </div>
               </div>

@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { MessageSquare, BarChart3, Users, ExternalLink, Settings } from 'lucide-react'
 import { EventCodeCard } from '@/components/events/event-code-card'
 import { DeleteEventButton } from '@/components/events/delete-event-button'
+import { AppHeader } from '@/components/layout/app-header'
 import { UserMenu } from '@/components/layout/user-menu'
 import { useTranslations } from 'next-intl'
 
@@ -33,36 +34,34 @@ export function EventDetailContent({ event, userName, userEmail, participantUrl 
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <MessageSquare className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">{tc('appName')}</span>
-          </Link>
-          <nav className="flex items-center space-x-4">
+      <AppHeader 
+        session={{ user: { name: userName, email: userEmail } }}
+        rightContent={
+          <>
             <UserMenu userName={userName} userEmail={userEmail} />
             <Link href="/dashboard">
-              <Button>{t('detail.dashboard')}</Button>
+              <Button size="sm" className="md:text-base">
+                {t('detail.dashboard')}
+              </Button>
             </Link>
-          </nav>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-6xl">
         {/* Event Header */}
         <div className="mb-8">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">{event.title}</h1>
+          <div className="flex flex-col sm:flex-row items-start justify-between gap-3 sm:gap-4 mb-4">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl md:text-3xl font-bold mb-2 break-words">{event.title}</h1>
               {event.description && (
-                <p className="text-gray-600">{event.description}</p>
+                <p className="text-sm md:text-base text-gray-600 break-words">{event.description}</p>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
               <span
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                className={`px-2 md:px-3 py-1 rounded-full text-xs md:text-sm font-medium whitespace-nowrap ${
                   event.isActive
                     ? 'bg-green-100 text-green-800'
                     : 'bg-gray-100 text-gray-800'

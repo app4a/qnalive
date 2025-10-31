@@ -649,30 +649,33 @@ export default function ParticipantViewPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b bg-white sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between mb-2">
-            <h1 className="text-2xl font-bold">{event.title}</h1>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
-                <Users className="h-4 w-4" />
-                <span>{participantCount} {t('participants')}</span>
+      <header className="border-b bg-white sticky top-0 z-10 backdrop-blur-sm bg-white/80">
+        <div className="container mx-auto px-4 py-3 md:py-4">
+          <div className="flex items-center justify-between gap-2 md:gap-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-lg md:text-2xl font-bold truncate">{event.title}</h1>
+              {event.description && (
+                <p className="text-xs md:text-sm text-gray-600 truncate hidden sm:block mt-0.5">{event.description}</p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
+              <div className="flex items-center gap-1.5 text-xs md:text-sm text-gray-600">
+                <Users className="h-3 w-3 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">{participantCount} {t('participants')}</span>
+                <span className="sm:hidden">{participantCount}</span>
               </div>
               {currentUserId ? (
                 <UserMenu userName={currentUserName} userEmail={currentUserEmail} />
               ) : (
                 <Button asChild variant="outline" size="sm">
                   <a href="/auth/signin">
-                    <LogIn className="h-4 w-4 mr-2" />
-                    {tc('signIn')}
+                    <LogIn className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
+                    <span className="hidden md:inline">{tc('signIn')}</span>
                   </a>
                 </Button>
               )}
             </div>
           </div>
-          {event.description && (
-            <p className="text-gray-600">{event.description}</p>
-          )}
         </div>
       </header>
 

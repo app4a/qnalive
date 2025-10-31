@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { MessageSquare, ArrowLeft } from 'lucide-react'
-import { UserMenu } from '@/components/layout/user-menu'
+import { AppHeader } from '@/components/layout/app-header'
 import { useTranslations } from 'next-intl'
 
 export default function NewEventPage() {
@@ -76,21 +76,7 @@ export default function NewEventPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <MessageSquare className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">{tc('appName')}</span>
-          </Link>
-          <nav className="flex items-center space-x-4">
-            <UserMenu userName={session?.user?.name} userEmail={session?.user?.email} />
-            <Link href="/dashboard">
-              <Button>{td('title')}</Button>
-            </Link>
-          </nav>
-        </div>
-      </header>
+      <AppHeader session={session} showDashboardButton={true} />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8 max-w-2xl">

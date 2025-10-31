@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, Plus, Users, BarChart3 } from 'lucide-react'
 import { formatRelativeTime } from '@/lib/utils'
+import { AppHeader } from '@/components/layout/app-header'
 import { UserMenu } from '@/components/layout/user-menu'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -35,24 +36,21 @@ export function DashboardContent({ userName, userEmail, events }: DashboardConte
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="border-b bg-white">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <MessageSquare className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">{tCommon('appName')}</span>
-          </Link>
-          <div className="flex items-center gap-4">
+      <AppHeader 
+        session={{ user: { name: userName, email: userEmail } }}
+        rightContent={
+          <>
             <UserMenu userName={userName} userEmail={userEmail} />
             <Link href="/dashboard/events/new">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                {t('newEvent')}
+              <Button size="sm" className="md:text-base">
+                <Plus className="h-4 w-4 mr-1 md:mr-2" />
+                <span className="hidden sm:inline">{t('newEvent')}</span>
+                <span className="sm:hidden">New</span>
               </Button>
             </Link>
-          </div>
-        </div>
-      </header>
+          </>
+        }
+      />
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">

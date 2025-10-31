@@ -11,9 +11,8 @@ import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { getSessionId } from '@/lib/utils'
 import { MessageSquare } from 'lucide-react'
-import { UserMenu } from '@/components/layout/user-menu'
+import { AppHeader } from '@/components/layout/app-header'
 import { useTranslations } from 'next-intl'
-import { LanguageSwitcher } from '@/components/language-switcher'
 
 export default function JoinEventPage() {
   const { data: session } = useSession()
@@ -79,35 +78,7 @@ export default function JoinEventPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex flex-col">
-      {/* Header */}
-      <header className="border-b bg-white/80 backdrop-blur-sm">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center space-x-2">
-            <MessageSquare className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">{tCommon('appName')}</span>
-          </Link>
-          <nav className="flex items-center space-x-4">
-            {session?.user ? (
-              <>
-                <UserMenu userName={session.user.name} userEmail={session.user.email} />
-                <Link href="/dashboard">
-                  <Button>{tLanding('dashboard')}</Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <LanguageSwitcher />
-                <Link href="/auth/signin">
-                  <Button variant="ghost">{tCommon('signIn')}</Button>
-                </Link>
-                <Link href="/auth/signup">
-                  <Button>{tLanding('getStarted')}</Button>
-                </Link>
-              </>
-            )}
-          </nav>
-        </div>
-      </header>
+      <AppHeader session={session} showDashboardButton={true} showLanguageSwitcher={true} />
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">

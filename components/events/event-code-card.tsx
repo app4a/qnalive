@@ -39,32 +39,33 @@ export function EventCodeCard({ eventCode, participantUrl }: EventCodeCardProps)
   return (
     <Card className="bg-blue-50 border-blue-200">
       <CardHeader>
-        <CardTitle className="text-lg">{t('title')}</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-base md:text-lg">{t('title')}</CardTitle>
+        <CardDescription className="text-sm">
           {t('description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center gap-4">
-          <div className="flex-1">
-            <div className="text-4xl font-mono font-bold tracking-widest text-blue-600">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <div className="flex-1 min-w-0 w-full">
+            <div className="text-2xl sm:text-3xl md:text-4xl font-mono font-bold tracking-wider md:tracking-widest text-blue-600 break-all">
               {eventCode}
             </div>
-            <div className="text-sm text-gray-600 mt-2 flex items-center gap-2">
-              <span>{t('joinAt')}: {participantUrl}</span>
+            <div className="text-xs sm:text-sm text-gray-600 mt-2 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
+              <span className="break-all">{t('joinAt')}: {participantUrl}</span>
               <button
                 onClick={handleCopyUrl}
-                className="text-blue-600 hover:text-blue-800 underline text-xs"
+                className="text-blue-600 hover:text-blue-800 underline text-xs self-start"
               >
                 {t('copyUrl')}
               </button>
             </div>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex sm:flex-col gap-2 w-full sm:w-auto">
             <Button
               variant="outline"
               size="sm"
               onClick={handleCopyCode}
+              className="flex-1 sm:flex-none"
             >
               {copied ? (
                 <>
@@ -78,7 +79,7 @@ export function EventCodeCard({ eventCode, participantUrl }: EventCodeCardProps)
                 </>
               )}
             </Button>
-            <Link href={`/e/${eventCode}`} target="_blank">
+            <Link href={`/e/${eventCode}`} target="_blank" className="flex-1 sm:flex-none">
               <Button variant="outline" size="sm" className="w-full">
                 <ExternalLink className="h-4 w-4 mr-2" />
                 {t('openView')}
