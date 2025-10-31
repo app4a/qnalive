@@ -138,10 +138,9 @@ export async function DELETE(
     // Use transaction to ensure atomicity and prevent race conditions
     const updated = await prisma.$transaction(async (tx) => {
       // Try to delete upvote - will fail if not found
-      let deleteResult
       try {
         if (userId) {
-          deleteResult = await tx.questionUpvote.delete({
+          await tx.questionUpvote.delete({
             where: {
               questionId_userId: {
                 questionId: params.id,
@@ -150,7 +149,7 @@ export async function DELETE(
             },
           })
         } else {
-          deleteResult = await tx.questionUpvote.delete({
+          await tx.questionUpvote.delete({
             where: {
               questionId_sessionId: {
                 questionId: params.id,

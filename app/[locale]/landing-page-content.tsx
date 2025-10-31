@@ -2,7 +2,7 @@
 
 import { Link } from '@/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { MessageSquare, BarChart3, Users, Zap } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 import { useTranslations } from 'next-intl'
@@ -13,7 +13,6 @@ interface LandingPageContentProps {
 
 export default function LandingPageContent({ session }: LandingPageContentProps) {
   const t = useTranslations('landing')
-  const tCommon = useTranslations('common')
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">

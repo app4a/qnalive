@@ -47,7 +47,6 @@ export function ManageQuestionsContent({
   userId 
 }: ManageQuestionsContentProps) {
   const t = useTranslations('events.questions')
-  const tCommon = useTranslations('common')
   const tDashboard = useTranslations('landing.header')
 
   return (

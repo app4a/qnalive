@@ -47,7 +47,7 @@ export default function SignInPage() {
         router.push('/dashboard')
         router.refresh()
       }
-    } catch (error) {
+    } catch {
       toast({
         variant: 'destructive',
         title: tCommon('error'),

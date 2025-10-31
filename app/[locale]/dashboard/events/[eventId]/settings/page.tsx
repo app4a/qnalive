@@ -13,8 +13,6 @@ import { getTranslations } from 'next-intl/server'
 export default async function EventSettingsPage({ params }: { params: { locale: string; eventId: string } }) {
   const session = await auth()
   const t = await getTranslations({ locale: params.locale, namespace: 'events.settings' })
-  const td = await getTranslations({ locale: params.locale, namespace: 'dashboard' })
-  const tc = await getTranslations({ locale: params.locale, namespace: 'common' })
 
   if (!session?.user) {
     redirect('/auth/signin')

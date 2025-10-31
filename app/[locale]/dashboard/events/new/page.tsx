@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { MessageSquare, ArrowLeft } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 import { useTranslations } from 'next-intl'
 

@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Label } from '@/components/ui/label'
 import { useToast } from '@/hooks/use-toast'
 import { getSessionId } from '@/lib/utils'
-import { MessageSquare } from 'lucide-react'
 import { AppHeader } from '@/components/layout/app-header'
 import { useTranslations } from 'next-intl'
 
@@ -22,7 +21,6 @@ export default function JoinEventPage() {
   const { toast } = useToast()
   const t = useTranslations('join')
   const tCommon = useTranslations('common')
-  const tLanding = useTranslations('landing.header')
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault()

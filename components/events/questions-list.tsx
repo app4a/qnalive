@@ -24,7 +24,6 @@ import {
 import { ArrowUp, Check, X, Archive, Trash2, CheckCircle, MessageSquare, Clock, TrendingUp } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { getSocket } from '@/lib/socket-client'
-import type { Socket } from 'socket.io-client'
 import { formatDateTime } from '@/lib/date-utils'
 import { useTranslations } from 'next-intl'
 
@@ -55,7 +54,6 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [questionToDelete, setQuestionToDelete] = useState<string | null>(null)
-  const [socket, setSocket] = useState<Socket | null>(null)
   const [sortBy, setSortBy] = useState<'latest' | 'votes'>('latest')
   const router = useRouter()
   const { toast } = useToast()
@@ -76,7 +74,6 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
   // Set up Socket.io for real-time updates
   useEffect(() => {
     const socketInstance = getSocket()
-    setSocket(socketInstance)
 
     console.log('[Admin] Setting up socket connection for event:', eventId)
 

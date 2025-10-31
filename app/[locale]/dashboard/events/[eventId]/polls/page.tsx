@@ -3,8 +3,8 @@ import { redirect } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { Link } from '@/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, BarChart3, Plus } from 'lucide-react'
+import { Card, CardContent } from '@/components/ui/card'
+import { ArrowLeft, BarChart3 } from 'lucide-react'
 import { PollsList } from '@/components/events/polls-list'
 import { CreatePollDialog } from '@/components/events/create-poll-dialog'
 import { AppHeader } from '@/components/layout/app-header'
@@ -14,8 +14,6 @@ import { getTranslations } from 'next-intl/server'
 export default async function ManagePollsPage({ params }: { params: { locale: string; eventId: string } }) {
   const session = await auth()
   const t = await getTranslations({ locale: params.locale, namespace: 'events.polls' })
-  const td = await getTranslations({ locale: params.locale, namespace: 'dashboard' })
-  const tc = await getTranslations({ locale: params.locale, namespace: 'common' })
 
   if (!session?.user) {
     redirect('/auth/signin')

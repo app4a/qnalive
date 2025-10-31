@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Plus, X, BarChart3 } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useTranslations } from 'next-intl'
 

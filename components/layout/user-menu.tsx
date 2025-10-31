@@ -1,6 +1,6 @@
 'use client'
 
-import { LogOut, User, Globe } from 'lucide-react'
+import { LogOut, User } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 import { useTranslations } from 'next-intl'
 import {

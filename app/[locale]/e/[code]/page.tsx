@@ -83,7 +83,6 @@ export default function ParticipantViewPage() {
   const [authorName, setAuthorName] = useState('')
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
-  const [socket, setSocket] = useState<Socket | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [currentUserName, setCurrentUserName] = useState<string | null>(null)
   const [currentUserEmail, setCurrentUserEmail] = useState<string | null>(null)
@@ -165,7 +164,6 @@ export default function ParticipantViewPage() {
 
         // Set up WebSocket
         socketInstance = getSocket()
-        setSocket(socketInstance)
         
         // Get user ID if authenticated, otherwise use session ID
         const sessionIdForSocket = getSessionId()
@@ -370,7 +368,7 @@ export default function ParticipantViewPage() {
         socketInstance.on('event:updated', handleEventUpdated)
 
         setLoading(false)
-      } catch (error) {
+      } catch {
         toast({
           variant: 'destructive',
           title: tc('error'),
