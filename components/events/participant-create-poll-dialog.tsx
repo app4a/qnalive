@@ -74,7 +74,7 @@ export function ParticipantCreatePollDialog({
     if (!title.trim()) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: tc('error'),
         description: 'Please enter a poll question',
       })
       return
@@ -83,7 +83,7 @@ export function ParticipantCreatePollDialog({
     if (title.trim().length < 5) {
       toast({
         variant: 'destructive',
-        title: 'Error',
+        title: tc('error'),
         description: 'Poll question must be at least 5 characters',
       })
       return
@@ -100,7 +100,7 @@ export function ParticipantCreatePollDialog({
       if (pollOptions.length < 2) {
         toast({
           variant: 'destructive',
-          title: 'Error',
+          title: tc('error'),
           description: 'Please provide at least 2 options',
         })
         return
@@ -128,7 +128,7 @@ export function ParticipantCreatePollDialog({
           ).join('\n')
           throw new Error(errorMessages)
         }
-        throw new Error(data.error || data.message || 'Failed to create poll')
+        throw new Error(data.error || data.message || tc('errors.failedToCreatePoll'))
       }
 
       const createdPoll = await response.json()
@@ -148,8 +148,8 @@ export function ParticipantCreatePollDialog({
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to create poll',
+        title: tc('error'),
+        description: error.message || tc('errors.failedToCreatePoll'),
       })
     } finally {
       setIsSubmitting(false)

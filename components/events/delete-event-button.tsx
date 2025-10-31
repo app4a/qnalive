@@ -39,7 +39,7 @@ export function DeleteEventButton({ eventId, eventTitle }: DeleteEventButtonProp
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to delete event')
+        throw new Error(data.error || tc('errors.failedToDeleteEvent'))
       }
 
       toast({

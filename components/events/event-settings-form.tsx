@@ -43,6 +43,7 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
   const router = useRouter()
   const { toast } = useToast()
   const t = useTranslations('events.settings')
+  const tCommon = useTranslations('common')
   const tc = useTranslations('common')
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,7 +84,7 @@ export function EventSettingsForm({ event }: EventSettingsFormProps) {
           throw new Error(data.message)
         }
         
-        throw new Error(data.error || 'Failed to update event')
+        throw new Error(data.error || tCommon('errors.failedToUpdateEvent'))
       }
 
       const data = await response.json()

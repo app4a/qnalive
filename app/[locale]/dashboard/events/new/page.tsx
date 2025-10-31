@@ -52,7 +52,7 @@ export default function NewEventPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to create event')
+        throw new Error(data.error || tc('errors.failedToCreateEvent'))
       }
 
       toast({

@@ -73,7 +73,7 @@ function ResetPasswordForm() {
       const data = await response.json()
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to reset password')
+        throw new Error(data.error || tc('errors.failedToResetPassword'))
       }
 
       toast({

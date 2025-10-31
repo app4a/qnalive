@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
         if (response.status === 429) {
           throw new Error(data.error || 'Too many requests. Please try again later.')
         }
-        throw new Error(data.error || 'Failed to send reset email')
+        throw new Error(data.error || tc('errors.failedToSendResetEmail'))
       }
 
       setSubmitted(true)

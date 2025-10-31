@@ -34,7 +34,33 @@
     "pendingReview": "Pending Review",
     "language": "Language",
     "english": "English",
-    "korean": "한국어"
+    "korean": "한국어",
+    "errors": {
+      "eventNotFound": "Event not found",
+      "failedToSubmitQuestion": "Failed to submit question",
+      "failedToDeleteQuestion": "Failed to delete question",
+      "failedToCreateEvent": "Failed to create event",
+      "failedToSendResetEmail": "Failed to send reset email",
+      "failedToResetPassword": "Failed to reset password",
+      "failedToUpdatePoll": "Failed to update poll",
+      "failedToDeletePoll": "Failed to delete poll",
+      "failedToUpdateQuestion": "Failed to update question",
+      "failedToCreatePoll": "Failed to create poll",
+      "failedToUpdateEvent": "Failed to update event",
+      "failedToDeleteEvent": "Failed to delete event",
+      "alreadyVoted": "You have already voted",
+      "alreadyVotedDifferentOption": "You have already voted on a different option",
+      "alreadyUpvoted": "You have already upvoted this question",
+      "pollNotActive": "This poll is not active",
+      "pollNotFound": "Poll not found",
+      "questionNotFound": "Question not found",
+      "voteNotFound": "Vote not found",
+      "upvoteNotFound": "Upvote not found",
+      "eventNotActive": "Event is not active",
+      "mustSignIn": "You must be signed in to ask questions at this event",
+      "unauthorized": "Unauthorized",
+      "forbidden": "Forbidden"
+    }
   },
   "landing": {
     "header": {

@@ -118,7 +118,7 @@ export function CreatePollDialog({ eventId }: CreatePollDialogProps) {
           ).join('\n')
           throw new Error(errorMessages)
         }
-        throw new Error(data.error || data.message || 'Failed to create poll')
+        throw new Error(data.error || data.message || tc('errors.failedToCreatePoll'))
       }
 
       toast({

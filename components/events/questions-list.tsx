@@ -157,7 +157,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
         body: JSON.stringify({ status }),
       })
 
-      if (!response.ok) throw new Error('Failed to update question')
+      if (!response.ok) throw new Error(tCommon('errors.failedToUpdateQuestion'))
 
       setQuestions(prev =>
         prev.map(q => (q.id === questionId ? { ...q, status } : q))
@@ -172,8 +172,8 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
     } catch (error: any) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: error.message || 'Failed to update question',
+        title: tCommon('error'),
+        description: error.message || tCommon('errors.failedToUpdateQuestion'),
       })
     }
   }
@@ -186,7 +186,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
         body: JSON.stringify({ isAnswered: !isAnswered }),
       })
 
-      if (!response.ok) throw new Error('Failed to update question')
+      if (!response.ok) throw new Error(tCommon('errors.failedToUpdateQuestion'))
 
       setQuestions(prev =>
         prev.map(q => (q.id === questionId ? { ...q, isAnswered: !isAnswered } : q))
@@ -215,7 +215,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
         body: JSON.stringify({ isArchived: !isArchived }),
       })
 
-      if (!response.ok) throw new Error('Failed to update question')
+      if (!response.ok) throw new Error(tCommon('errors.failedToUpdateQuestion'))
 
       // Update will happen via Socket.io
       toast({
@@ -247,7 +247,7 @@ export function QuestionsList({ questions: initialQuestions, eventId, userId }: 
         method: 'DELETE',
       })
 
-      if (!response.ok) throw new Error('Failed to delete question')
+      if (!response.ok) throw new Error(tCommon('errors.failedToDeleteQuestion'))
 
       setQuestions(prev => prev.filter(q => q.id !== questionToDelete))
 

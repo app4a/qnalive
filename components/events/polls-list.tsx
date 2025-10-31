@@ -149,7 +149,7 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
         body: JSON.stringify({ isActive: !isActive }),
       })
 
-      if (!response.ok) throw new Error('Failed to update poll')
+      if (!response.ok) throw new Error(tc('errors.failedToUpdatePoll'))
 
       setPolls(prev =>
         prev.map(p => (p.id === pollId ? { ...p, isActive: !isActive } : p))
@@ -185,7 +185,7 @@ export function PollsList({ polls: initialPolls, eventId }: PollsListProps) {
         method: 'DELETE',
       })
 
-      if (!response.ok) throw new Error('Failed to delete poll')
+      if (!response.ok) throw new Error(tc('errors.failedToDeletePoll'))
 
       setPolls(prev => prev.filter(p => p.id !== pollToDelete))
 

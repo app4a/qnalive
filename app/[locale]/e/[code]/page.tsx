@@ -96,13 +96,34 @@ export default function ParticipantViewPage() {
   const [pollSortBy, setPollSortBy] = useState<'latest' | 'votes'>('latest')
   const { toast } = useToast()
 
+  // Helper function to translate API error messages
+  const translateError = (errorMessage: string): string => {
+    const errorMap: Record<string, string> = {
+      'Already voted': tc('errors.alreadyVoted'),
+      'Already voted on a different option': tc('errors.alreadyVotedDifferentOption'),
+      'Already upvoted': tc('errors.alreadyUpvoted'),
+      'Poll is not active': tc('errors.pollNotActive'),
+      'Poll not found': tc('errors.pollNotFound'),
+      'Question not found': tc('errors.questionNotFound'),
+      'Vote not found': tc('errors.voteNotFound'),
+      'Upvote not found': tc('errors.upvoteNotFound'),
+      'Event is not active': tc('errors.eventNotActive'),
+      'Event not found or inactive': tc('errors.eventNotActive'),
+      'You must be signed in to ask questions at this event.': tc('errors.mustSignIn'),
+      'Unauthorized': tc('errors.unauthorized'),
+      'Forbidden': tc('errors.forbidden'),
+    }
+    
+    return errorMap[errorMessage] || errorMessage
+  }
+
   useEffect(() => {
     let socketInstance: Socket | null = null
 
     const fetchEvent = async () => {
       try {
         const response = await fetch(`/api/events/code/${code}`)
-        if (!response.ok) throw new Error('Event not found')
+        if (!response.ok) throw new Error(tc('errors.eventNotFound'))
         const data = await response.json()
         setEvent(data)
         
@@ -399,7 +420,7 @@ export default function ParticipantViewPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to submit question')
+        throw new Error(data.error || tc('errors.failedToSubmitQuestion'))
       }
 
       const createdQuestion = await response.json()
@@ -427,7 +448,7 @@ export default function ParticipantViewPage() {
       toast({
         variant: 'destructive',
         title: tc('error'),
-        description: error.message || t('errors.submitQuestion'),
+        description: translateError(error.message) || t('errors.submitQuestion'),
       })
     } finally {
       setSubmitting(false)
@@ -476,7 +497,7 @@ export default function ParticipantViewPage() {
       toast({
         variant: 'destructive',
         title: tc('error'),
-        description: error.message || t('errors.upvote'),
+        description: translateError(error.message) || t('errors.upvote'),
       })
       
       // Revert upvoted state on error
@@ -514,7 +535,7 @@ export default function ParticipantViewPage() {
 
       if (!response.ok) {
         const data = await response.json()
-        throw new Error(data.error || 'Failed to delete question')
+        throw new Error(data.error || tc('errors.failedToDeleteQuestion'))
       }
 
       toast({
@@ -527,7 +548,7 @@ export default function ParticipantViewPage() {
       toast({
         variant: 'destructive',
         title: tc('error'),
-        description: error.message || t('errors.deleteQuestion'),
+        description: translateError(error.message) || t('errors.deleteQuestion'),
       })
     } finally {
       setDeletingId(null)
@@ -594,7 +615,7 @@ export default function ParticipantViewPage() {
       toast({
         variant: 'destructive',
         title: tc('error'),
-        description: error.message || t('errors.vote'),
+        description: translateError(error.message) || t('errors.vote'),
       })
     }
   }
