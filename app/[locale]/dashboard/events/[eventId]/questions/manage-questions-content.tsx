@@ -74,8 +74,7 @@ export function ManageQuestionsContent({
             <UserMenu userName={userName} userEmail={userEmail} />
             <Link href="/dashboard">
               <Button size="sm">
-                <span className="hidden sm:inline">{tDashboard('dashboard')}</span>
-                <span className="sm:hidden">Dashboard</span>
+                {tDashboard('dashboard')}
               </Button>
             </Link>
           </>

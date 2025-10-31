@@ -13,6 +13,7 @@ import { getTranslations } from 'next-intl/server'
 export default async function EventSettingsPage({ params }: { params: { locale: string; eventId: string } }) {
   const session = await auth()
   const t = await getTranslations({ locale: params.locale, namespace: 'events.settings' })
+  const tDashboard = await getTranslations({ locale: params.locale, namespace: 'landing.header' })
 
   if (!session?.user) {
     redirect('/auth/signin')
@@ -55,8 +56,7 @@ export default async function EventSettingsPage({ params }: { params: { locale: 
             <UserMenu userName={session.user.name} userEmail={session.user.email} />
             <Link href="/dashboard">
               <Button size="sm">
-                <span className="hidden sm:inline">Dashboard</span>
-                <span className="sm:hidden">Dashboard</span>
+                {tDashboard('dashboard')}
               </Button>
             </Link>
           </>
