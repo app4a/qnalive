@@ -23,11 +23,32 @@ import { Plus, X } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useTranslations } from 'next-intl'
 
+type CreatedPoll = {
+  id: string
+  title: string
+  type: string
+  isActive: boolean
+  createdAt: string
+  createdBy?: {
+    id: string
+    name: string | null
+    image: string | null
+  }
+  options: Array<{
+    id: string
+    optionText: string
+    votesCount: number
+    displayOrder: number
+  }>
+  userVote?: string | null
+  [key: string]: unknown
+}
+
 interface ParticipantCreatePollDialogProps {
   eventId: string
   open: boolean
   onOpenChange: (open: boolean) => void
-  onPollCreated?: () => void
+  onPollCreated?: (poll: CreatedPoll) => void
 }
 
 export function ParticipantCreatePollDialog({ 
@@ -131,7 +152,7 @@ export function ParticipantCreatePollDialog({
         throw new Error(data.error || data.message || tc('errors.failedToCreatePoll'))
       }
 
-      const createdPoll = await response.json()
+      const createdPoll: CreatedPoll = await response.json()
 
       toast({
         title: 'Poll created!',
@@ -142,9 +163,7 @@ export function ParticipantCreatePollDialog({
 
       resetForm()
       onOpenChange(false)
-      if (onPollCreated) {
-        onPollCreated()
-      }
+      onPollCreated?.(createdPoll)
     } catch (error: any) {
       toast({
         variant: 'destructive',

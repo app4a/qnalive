@@ -6,19 +6,17 @@
 
 import { test, expect } from '@playwright/test'
 import { EventPage } from '../page-objects/EventPage'
-import { DashboardPage } from '../page-objects/DashboardPage'
-import { setupTestSession, clearAuth, getSessionId } from '../helpers/auth'
+import { setupTestSession, clearAuth } from '../helpers/auth'
 import { resetDatabase } from '../helpers/database'
-import { createTestUser, createTestEvent } from '../fixtures'
+import { createTestUser, createTestEvent, createTestQuestion, createTestPoll } from '../fixtures'
 
 test.describe('Question Submission', () => {
   let eventPage: EventPage
-  let dashboardPage: DashboardPage
   let testEventCode: string
+  let testEvent: Awaited<ReturnType<typeof createTestEvent>>
   
-  test.beforeEach(async ({ page, context }) => {
+  test.beforeEach(async ({ page }) => {
     eventPage = new EventPage(page)
-    dashboardPage = new DashboardPage(page)
     
     // Reset database
     await resetDatabase()
@@ -29,6 +27,7 @@ test.describe('Question Submission', () => {
       allowAnonymous: true,
       moderationEnabled: false,
     })
+    testEvent = event
     testEventCode = event.eventCode
   })
   
@@ -143,6 +142,53 @@ test.describe('Question Submission', () => {
     for (const question of questions) {
       await expect(page.locator(`text="${question}"`)).toBeVisible()
     }
+  })
+
+  test('Q-008: Upvote updates count immediately', async ({ page, context }) => {
+    await setupTestSession(context, 'upvoter@example.com')
+
+    const seedQuestion = await createTestQuestion(testEvent.id, {
+      content: `Realtime upvote ${Date.now()}`,
+      status: 'APPROVED',
+    })
+
+    await eventPage.goto(testEventCode)
+
+    const questionCard = page.locator('[data-testid="question-card"]').filter({ hasText: seedQuestion.content }).first()
+    await expect(questionCard).toBeVisible({ timeout: 5000 })
+
+    await expect.poll(async () => eventPage.getQuestionUpvotes(seedQuestion.content)).toBe(0)
+
+    await eventPage.upvoteQuestion(seedQuestion.content)
+
+    await expect.poll(async () => eventPage.getQuestionUpvotes(seedQuestion.content)).toBe(1)
+  })
+
+  test('Q-009: Poll vote updates count immediately', async ({ page, context }) => {
+    const pollOwner = await createTestUser({ email: 'pollowner@example.com' })
+    const pollEvent = await createTestEvent(pollOwner.id, {
+      allowAnonymous: true,
+      moderationEnabled: false,
+      allowParticipantPolls: true,
+    })
+    const poll = await createTestPoll(pollEvent.id, pollOwner.id, ['Choice A', 'Choice B'], {
+      isActive: true,
+    })
+
+    await setupTestSession(context, 'pollvoter@example.com')
+
+    await eventPage.goto(pollEvent.eventCode)
+
+    const pollCard = page.locator('[data-testid="poll-card"]').filter({ hasText: poll.title }).first()
+    await expect(pollCard).toBeVisible({ timeout: 5000 })
+
+    const voteCountLocator = pollCard
+      .locator('[data-testid="poll-option"]').filter({ hasText: 'Choice A' })
+      .locator('[data-testid="vote-count"]').first()
+
+    await eventPage.votePoll(poll.title, 'Choice A')
+
+    await expect(voteCountLocator).toHaveText(/1\s*\(/)
   })
 })
 

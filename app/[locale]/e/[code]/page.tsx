@@ -119,6 +119,8 @@ export default function ParticipantViewPage() {
 
   useEffect(() => {
     let socketInstance: Socket | null = null
+    let cancelled = false
+    let pendingConnectHandler: (() => void) | null = null
 
     const fetchEvent = async () => {
       try {
@@ -199,11 +201,30 @@ export default function ParticipantViewPage() {
         })
         setUpvotedQuestions(upvoted)
         
-        socketInstance.emit('event:join', { 
-          eventId: data.id, 
-          sessionId: sessionIdForSocket,
-          userId: userIdForSocket 
-        })
+        const joinRoom = async () => {
+          const socket = socketInstance
+          if (!socket) return
+          if (!socket.connected) {
+            await new Promise<void>((resolve) => {
+              const handler = () => {
+                pendingConnectHandler = null
+                resolve()
+              }
+              pendingConnectHandler = handler
+              socket.once('connect', handler)
+            })
+          }
+
+          if (!cancelled) {
+            socket.emit('event:join', {
+              eventId: data.id,
+              sessionId: sessionIdForSocket,
+              userId: userIdForSocket
+            })
+          }
+        }
+
+        joinRoom()
 
         // Listen for real-time updates
         const handleQuestionNew = (data: any) => {
@@ -382,8 +403,12 @@ export default function ParticipantViewPage() {
     fetchEvent()
 
     return () => {
+      cancelled = true
+
       if (socketInstance) {
-        // Remove all event listeners before disconnecting
+        if (pendingConnectHandler) {
+          socketInstance.off('connect', pendingConnectHandler)
+        }
         socketInstance.off('question:new')
         socketInstance.off('question:upvoted')
         socketInstance.off('question:updated')
@@ -470,12 +495,20 @@ export default function ParticipantViewPage() {
           throw new Error(data.error)
         }
 
-        // Update upvoted state only - count will update via Socket.io
+        const updatedQuestion = await response.json() as { upvotesCount: number }
+
+        // Update upvoted state
         setUpvotedQuestions(prev => {
           const newSet = new Set(prev)
           newSet.delete(questionId)
           return newSet
         })
+
+        setQuestions(prev =>
+          prev.map(q =>
+            q.id === questionId ? { ...q, upvotesCount: updatedQuestion.upvotesCount } : q
+          )
+        )
       } else {
         // Add upvote
         const response = await fetch(`/api/events/${event.id}/questions/${questionId}/upvote`, {
@@ -489,8 +522,15 @@ export default function ParticipantViewPage() {
           throw new Error(data.error)
         }
 
-        // Update upvoted state only - count will update via Socket.io
+        const updatedQuestion = await response.json() as { upvotesCount: number }
+
+        // Update upvoted state and count
         setUpvotedQuestions(prev => new Set([...prev, questionId]))
+        setQuestions(prev =>
+          prev.map(q =>
+            q.id === questionId ? { ...q, upvotesCount: updatedQuestion.upvotesCount } : q
+          )
+        )
       }
     } catch (error: any) {
       toast({
@@ -574,12 +614,18 @@ export default function ParticipantViewPage() {
           throw new Error(data.error)
         }
 
+        const updatedPoll = await response.json() as Poll
+
         // Update local state
         setUserVotes(prev => {
           const newVotes = new Map(prev)
           newVotes.delete(pollId)
           return newVotes
         })
+
+        setPolls(prev =>
+          prev.map(p => (p.id === pollId ? { ...p, ...updatedPoll } : p))
+        )
 
         toast({
           title: tc('success'),
@@ -598,12 +644,18 @@ export default function ParticipantViewPage() {
           throw new Error(data.error)
         }
 
+        const updatedPoll = await response.json() as Poll
+
         // Update local state
         setUserVotes(prev => {
           const newVotes = new Map(prev)
           newVotes.set(pollId, optionId)
           return newVotes
         })
+
+        setPolls(prev =>
+          prev.map(p => (p.id === pollId ? { ...p, ...updatedPoll } : p))
+        )
 
         toast({
           title: tc('success'),
@@ -660,8 +712,8 @@ export default function ParticipantViewPage() {
             <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
               <div className="flex items-center gap-1.5 text-xs md:text-sm text-gray-600">
                 <Users className="h-3 w-3 md:h-4 md:w-4" />
-                <span className="hidden sm:inline">{participantCount} {t('participants')}</span>
-                <span className="sm:hidden">{participantCount}</span>
+                <span className="hidden sm:inline" data-testid="participant-count">{participantCount} {t('participants')}</span>
+                <span className="sm:hidden" data-testid="participant-count">{participantCount}</span>
               </div>
               {currentUserId ? (
                 <UserMenu userName={currentUserName} userEmail={currentUserEmail} />
@@ -819,7 +871,11 @@ export default function ParticipantViewPage() {
               const creatorName = poll.createdBy?.name || 'Anonymous'
               
               return (
-                <Card key={poll.id} className={isPending ? 'border-yellow-200 bg-yellow-50' : ''}>
+                <Card
+                  key={poll.id}
+                  data-testid="poll-card"
+                  className={isPending ? 'border-yellow-200 bg-yellow-50' : ''}
+                >
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -884,13 +940,14 @@ export default function ParticipantViewPage() {
                         const isVoted = userVotedOptionId === option.id
 
                         return (
-                          <div key={option.id}>
+                          <div key={option.id} data-testid="poll-option">
                             <Button
                               variant={isVoted ? "default" : "outline"}
                               className={`w-full justify-between ${
                                 isVoted ? 'bg-primary text-primary-foreground' : ''
                               }`}
                               onClick={() => handleVote(poll.id, option.id)}
+                              data-testid="poll-option-button"
                               disabled={isPending}
                             >
                               <span className="flex items-center gap-2">
@@ -912,7 +969,7 @@ export default function ParticipantViewPage() {
                                 {option.optionText}
                               </span>
                               {showResults && (
-                                <span className="font-mono">
+                                <span className="font-mono" data-testid="vote-count">
                                   {option.votesCount} ({percentage.toFixed(0)}%)
                                 </span>
                               )}
@@ -1020,11 +1077,15 @@ export default function ParticipantViewPage() {
                 : question.sessionId === getSessionId()
               
               return (
-                <Card key={question.id} className={
+                <Card
+                  key={question.id}
+                  data-testid="question-card"
+                  className={
                   question.isAnswered ? 'border-green-200 bg-green-50' : 
                   question.status === 'PENDING' ? 'border-yellow-200 bg-yellow-50' : 
                   question.status === 'REJECTED' ? 'border-red-200 bg-red-50' : ''
-                }>
+                }
+                >
                   <CardContent className="pt-6">
                     <div className="flex gap-4">
                       <Button
@@ -1034,9 +1095,11 @@ export default function ParticipantViewPage() {
                         onClick={() => handleUpvote(question.id)}
                         disabled={isOwnQuestion}
                         title={isOwnQuestion ? "You can't upvote your own question" : isUpvoted ? "Remove upvote" : "Upvote this question"}
+                        data-testid="question-upvote-button"
+                        aria-pressed={isUpvoted}
                       >
                         <ArrowUp className="h-4 w-4" />
-                        <span className="text-xs font-bold">{question.upvotesCount}</span>
+                        <span className="text-xs font-bold" data-testid="question-upvote-count">{question.upvotesCount}</span>
                       </Button>
                       <div className="flex-1">
                         <p className="text-lg mb-2">{question.content}</p>
@@ -1114,8 +1177,38 @@ export default function ParticipantViewPage() {
           eventId={event.id}
           open={createPollDialogOpen}
           onOpenChange={setCreatePollDialogOpen}
-          onPollCreated={() => {
-            // Poll will appear via Socket.io real-time update
+          onPollCreated={(poll) => {
+            setPolls(prev => {
+              const shouldDisplay = poll.isActive || (currentUserId && poll.createdBy?.id === currentUserId)
+              if (!shouldDisplay) {
+                return prev
+              }
+              if (prev.some(p => p.id === poll.id)) {
+                return prev
+              }
+              const normalisedPoll: Poll = {
+                id: poll.id,
+                title: poll.title,
+                type: poll.type,
+                isActive: poll.isActive,
+                createdAt: typeof poll.createdAt === 'string' ? poll.createdAt : new Date(poll.createdAt).toISOString(),
+                options: poll.options.map(option => ({
+                  id: option.id,
+                  optionText: option.optionText,
+                  votesCount: option.votesCount,
+                })),
+                userVote: poll.userVote ?? undefined,
+                createdBy: poll.createdBy
+                  ? {
+                      id: poll.createdBy.id,
+                      name: poll.createdBy.name,
+                      image: poll.createdBy.image,
+                    }
+                  : undefined,
+              }
+
+              return [normalisedPoll, ...prev]
+            })
           }}
         />
       )}

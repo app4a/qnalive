@@ -4,7 +4,7 @@
  * Page Object Model for the event participant page (/e/{code})
  */
 
-import { Page, Locator, expect } from '@playwright/test'
+import { Page, Locator } from '@playwright/test'
 
 export class EventPage {
   readonly page: Page
@@ -57,8 +57,8 @@ export class EventPage {
    * Upvote a question by its content
    */
   async upvoteQuestion(questionContent: string) {
-    const questionCard = this.page.locator(`[data-testid="question-card"]:has-text("${questionContent}")`)
-    const upvoteButton = questionCard.locator('button:has-text("👍")').first()
+    const questionCard = this.page.locator(`[data-testid="question-card"]`).filter({ hasText: questionContent }).first()
+    const upvoteButton = questionCard.locator('[data-testid="question-upvote-button"]').first()
     
     await upvoteButton.click()
     await this.page.waitForTimeout(300)
@@ -87,17 +87,16 @@ export class EventPage {
     // Questions are displayed in Card components within the questions section
     // Wait a bit for any updates
     await this.page.waitForTimeout(500)
-    // Count visible question cards - they contain upvote buttons and question content
-    const questions = await this.page.locator('button:has-text("👍"), button[aria-label*="Upvote"]').count()
-    return questions
+    // Count visible question cards using data-test identifiers
+    return await this.page.locator('[data-testid="question-card"]').count()
   }
   
   /**
    * Get upvote count for a question
    */
   async getQuestionUpvotes(questionContent: string): Promise<number> {
-    const questionCard = this.page.locator(`[data-testid="question-card"]:has-text("${questionContent}")`)
-    const upvoteText = await questionCard.locator('[data-testid="upvote-count"]').first().textContent()
+    const questionCard = this.page.locator('[data-testid="question-card"]').filter({ hasText: questionContent }).first()
+    const upvoteText = await questionCard.locator('[data-testid="question-upvote-count"]').first().textContent()
     return parseInt(upvoteText || '0', 10)
   }
   
@@ -113,8 +112,8 @@ export class EventPage {
    * Vote on a poll
    */
   async votePoll(pollTitle: string, optionText: string) {
-    const pollCard = this.page.locator(`[data-testid="poll-card"]:has-text("${pollTitle}")`)
-    const optionButton = pollCard.locator(`button:has-text("${optionText}")`).first()
+    const pollCard = this.page.locator('[data-testid="poll-card"]').filter({ hasText: pollTitle }).first()
+    const optionButton = pollCard.locator('[data-testid="poll-option"]').filter({ hasText: optionText }).locator('[data-testid="poll-option-button"]').first()
     
     await optionButton.click()
     await this.page.waitForTimeout(300)
@@ -131,8 +130,8 @@ export class EventPage {
    * Get poll option vote count
    */
   async getPollOptionVotes(pollTitle: string, optionText: string): Promise<number> {
-    const pollCard = this.page.locator(`[data-testid="poll-card"]:has-text("${pollTitle}")`)
-    const option = pollCard.locator(`[data-testid="poll-option"]:has-text("${optionText}")`).first()
+    const pollCard = this.page.locator('[data-testid="poll-card"]').filter({ hasText: pollTitle }).first()
+    const option = pollCard.locator('[data-testid="poll-option"]').filter({ hasText: optionText }).first()
     const voteText = await option.locator('[data-testid="vote-count"]').textContent()
     return parseInt(voteText || '0', 10)
   }

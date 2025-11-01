@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function ManageQuestionsPage({ params }: { params: Promise<{ locale: string; eventId: string }> }) {
-  const { locale, eventId } = await params
+  const { eventId } = await params
   const session = await auth()
 
   if (!session?.user) {

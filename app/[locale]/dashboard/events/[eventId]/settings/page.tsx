@@ -15,7 +15,6 @@ export default async function EventSettingsPage({ params }: { params: Promise<{ 
   const session = await auth()
   const t = await getTranslations({ locale, namespace: 'events.settings' })
   const tDashboard = await getTranslations({ locale, namespace: 'landing.header' })
-  const tc = await getTranslations({ locale, namespace: 'common' })
 
   if (!session?.user) {
     redirect('/auth/signin')
