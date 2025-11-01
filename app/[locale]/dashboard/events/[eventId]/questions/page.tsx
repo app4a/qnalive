@@ -7,7 +7,8 @@ import { ManageQuestionsContent } from './manage-questions-content'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-export default async function ManageQuestionsPage({ params }: { params: { eventId: string } }) {
+export default async function ManageQuestionsPage({ params }: { params: Promise<{ locale: string; eventId: string }> }) {
+  const { locale, eventId } = await params
   const session = await auth()
 
   if (!session?.user) {
@@ -15,7 +16,7 @@ export default async function ManageQuestionsPage({ params }: { params: { eventI
   }
 
   const event = await prisma.event.findUnique({
-    where: { id: params.eventId },
+    where: { id: eventId },
   })
 
   if (!event) {
@@ -27,10 +28,7 @@ export default async function ManageQuestionsPage({ params }: { params: { eventI
   }
 
   const questions = await prisma.question.findMany({
-    where: {
-      eventId: params.eventId,
-      // Include archived questions in admin view
-    },
+    where: { eventId },
     include: {
       author: {
         select: {

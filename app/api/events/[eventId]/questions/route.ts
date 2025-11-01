@@ -12,8 +12,9 @@ const questionSchema = z.object({
 // POST /api/events/[eventId]/questions - Submit question
 export async function POST(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
     const body = await req.json()
@@ -116,8 +117,9 @@ export async function POST(
 // GET /api/events/[eventId]/questions - List questions
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
+  const params = await context.params
   try {
     const { searchParams } = new URL(req.url)
     const sortBy = searchParams.get('sortBy') || 'popular' // popular, recent, answered

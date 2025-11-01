@@ -18,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html className={`${inter.variable} ${notoSansKR.variable}`}>
-      <body className="font-inter">
+    <html className={`${inter.variable} ${notoSansKR.variable}`} suppressHydrationWarning>
+      <body className="font-inter" suppressHydrationWarning>
         <AuthSessionProvider>
           {children}
           <Toaster />

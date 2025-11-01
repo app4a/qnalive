@@ -10,17 +10,19 @@ import { AppHeader } from '@/components/layout/app-header'
 import { UserMenu } from '@/components/layout/user-menu'
 import { getTranslations } from 'next-intl/server'
 
-export default async function EventSettingsPage({ params }: { params: { locale: string; eventId: string } }) {
+export default async function EventSettingsPage({ params }: { params: Promise<{ locale: string; eventId: string }> }) {
+  const { locale, eventId } = await params
   const session = await auth()
-  const t = await getTranslations({ locale: params.locale, namespace: 'events.settings' })
-  const tDashboard = await getTranslations({ locale: params.locale, namespace: 'landing.header' })
+  const t = await getTranslations({ locale, namespace: 'events.settings' })
+  const tDashboard = await getTranslations({ locale, namespace: 'landing.header' })
+  const tc = await getTranslations({ locale, namespace: 'common' })
 
   if (!session?.user) {
     redirect('/auth/signin')
   }
 
   const event = await prisma.event.findUnique({
-    where: { id: params.eventId },
+    where: { id: eventId },
   })
 
   if (!event) {
@@ -37,7 +39,7 @@ export default async function EventSettingsPage({ params }: { params: { locale: 
         session={session}
         leftContent={
           <div className="flex items-center gap-2 min-w-0 flex-1">
-            <Link href={`/dashboard/events/${params.eventId}`} className="flex-shrink-0">
+            <Link href={`/dashboard/events/${eventId}`} className="flex-shrink-0">
               <Button variant="ghost" size="sm" className="px-2 md:px-3">
                 <ArrowLeft className="h-4 w-4" />
               </Button>

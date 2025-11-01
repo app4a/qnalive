@@ -4,11 +4,12 @@ import { prisma } from '@/lib/prisma'
 // GET /api/events/[eventId]/participants - Debug endpoint to see all participants
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
+  const { eventId } = await context.params
   try {
     const participants = await prisma.eventParticipant.findMany({
-      where: { eventId: params.eventId },
+      where: { eventId },
       include: {
         user: {
           select: { id: true, name: true, email: true },
@@ -17,7 +18,7 @@ export async function GET(
     })
 
     const count = await prisma.eventParticipant.count({
-      where: { eventId: params.eventId },
+      where: { eventId },
     })
 
     return NextResponse.json({ count, participants })

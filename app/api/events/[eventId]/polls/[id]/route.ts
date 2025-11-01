@@ -5,11 +5,12 @@ import { prisma } from '@/lib/prisma'
 // GET /api/events/[eventId]/polls/[id] - Get poll details
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string; id: string } }
+  context: { params: Promise<{ eventId: string; id: string }> }
 ) {
+  const { eventId, id } = await context.params
   try {
     const poll = await prisma.poll.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         options: {
           orderBy: { displayOrder: 'asc' },
@@ -43,8 +44,9 @@ export async function GET(
 // PUT /api/events/[eventId]/polls/[id] - Update poll
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { eventId: string; id: string } }
+  context: { params: Promise<{ eventId: string; id: string }> }
 ) {
+  const { eventId, id } = await context.params
   try {
     const session = await auth()
 
@@ -56,7 +58,7 @@ export async function PUT(
     }
 
     const event = await prisma.event.findUnique({
-      where: { id: params.eventId },
+      where: { id: eventId },
     })
 
     if (!event) {
@@ -67,7 +69,7 @@ export async function PUT(
     }
 
     const poll = await prisma.poll.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!poll) {
@@ -88,7 +90,7 @@ export async function PUT(
     const body = await req.json()
 
     const updatedPoll = await prisma.poll.update({
-      where: { id: params.id },
+      where: { id },
       data: body,
       include: {
         options: {
@@ -108,8 +110,8 @@ export async function PUT(
       const { getIO } = await import('@/lib/socket')
       const io = getIO()
       if (io) {
-        console.log(`Emitting poll:updated event for poll ${params.id} to event room ${params.eventId}`)
-        io.to(params.eventId).emit('poll:updated', { poll: updatedPoll })
+        console.log(`Emitting poll:updated event for poll ${id} to event room ${eventId}`)
+        io.to(eventId).emit('poll:updated', { poll: updatedPoll })
       }
     } catch (error) {
       console.error('Failed to emit socket event:', error)
@@ -128,8 +130,9 @@ export async function PUT(
 // DELETE /api/events/[eventId]/polls/[id] - Delete poll
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { eventId: string; id: string } }
+  context: { params: Promise<{ eventId: string; id: string }> }
 ) {
+  const { eventId, id } = await context.params
   try {
     const session = await auth()
 
@@ -141,7 +144,7 @@ export async function DELETE(
     }
 
     const event = await prisma.event.findUnique({
-      where: { id: params.eventId },
+      where: { id: eventId },
     })
 
     if (!event) {
@@ -152,7 +155,7 @@ export async function DELETE(
     }
 
     const poll = await prisma.poll.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!poll) {
@@ -171,7 +174,7 @@ export async function DELETE(
     }
 
     await prisma.poll.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     // Emit Socket.io event for real-time updates
@@ -179,8 +182,8 @@ export async function DELETE(
       const { getIO } = await import('@/lib/socket')
       const io = getIO()
       if (io) {
-        console.log(`Emitting poll:deleted event for poll ${params.id} to event room ${params.eventId}`)
-        io.to(params.eventId).emit('poll:deleted', { pollId: params.id })
+        console.log(`Emitting poll:deleted event for poll ${id} to event room ${eventId}`)
+        io.to(eventId).emit('poll:deleted', { pollId: id })
       }
     } catch (error) {
       console.error('Failed to emit socket event:', error)

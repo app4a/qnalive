@@ -16,8 +16,9 @@ const createPollSchema = z.object({
 // POST /api/events/[eventId]/polls - Create poll
 export async function POST(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
 
@@ -132,8 +133,9 @@ export async function POST(
 // GET /api/events/[eventId]/polls - List polls
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
     const { searchParams } = new URL(req.url)

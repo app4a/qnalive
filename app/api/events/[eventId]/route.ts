@@ -20,8 +20,9 @@ const updateEventSchema = z.object({
 // GET /api/events/[eventId] - Get event details
 export async function GET(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
+  const params = await context.params
   try {
     const event = await prisma.event.findUnique({
       where: { id: params.eventId },
@@ -64,8 +65,9 @@ export async function GET(
 // PUT /api/events/[eventId] - Update event
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
 
@@ -260,8 +262,9 @@ export async function PUT(
 // DELETE /api/events/[eventId] - Delete event
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { eventId: string } }
+  context: { params: Promise<{ eventId: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
 

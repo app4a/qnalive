@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -666,10 +667,10 @@ export default function ParticipantViewPage() {
                 <UserMenu userName={currentUserName} userEmail={currentUserEmail} />
               ) : (
                 <Button asChild variant="outline" size="sm">
-                  <a href="/auth/signin">
+                  <Link href="/auth/signin">
                     <LogIn className="h-3 w-3 md:h-4 md:w-4 md:mr-2" />
                     <span className="hidden md:inline">{tc('signIn')}</span>
-                  </a>
+                  </Link>
                 </Button>
               )}
             </div>
@@ -695,9 +696,9 @@ export default function ParticipantViewPage() {
                   {t('signInRequired')}
                 </p>
                 <Button asChild>
-                  <a href="/auth/signin">
+                  <Link href="/auth/signin">
                     {t('signInToAsk')}
-                  </a>
+                  </Link>
                 </Button>
               </div>
             ) : (

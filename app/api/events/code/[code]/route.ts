@@ -4,8 +4,9 @@ import { prisma } from '@/lib/prisma'
 // GET /api/events/code/[code] - Get event by code
 export async function GET(
   req: NextRequest,
-  { params }: { params: { code: string } }
+  context: { params: Promise<{ code: string }> }
 ) {
+  const params = await context.params
   try {
     const event = await prisma.event.findUnique({
       where: { 

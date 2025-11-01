@@ -1,24 +1,29 @@
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
-import { locales } from '@/i18n';
-import Script from 'next/script';
+import { NextIntlClientProvider } from 'next-intl'
+import { getMessages } from 'next-intl/server'
+import { locales } from '@/i18n'
+import Script from 'next/script'
+
+const isSupportedLocale = (value: string): value is (typeof locales)[number] =>
+  locales.includes(value as (typeof locales)[number])
 
 export default async function LocaleLayout({
   children,
-  params: { locale }
+  params,
 }: {
-  children: React.ReactNode;
-  params: { locale: string };
+  children: React.ReactNode
+  params: Promise<{ locale: string }>
 }) {
+  const { locale } = await params
+
   // Validate locale - if invalid, default to 'en'
-  const validLocale = locales.includes(locale as any) ? locale : 'en';
+  const validLocale = isSupportedLocale(locale) ? locale : 'en'
 
   // Get messages for the specific locale
-  const messages = await getMessages({ locale: validLocale });
+  const messages = await getMessages({ locale: validLocale })
 
   return (
     <NextIntlClientProvider messages={messages} locale={validLocale}>
-      <Script id="locale-setter" strategy="beforeInteractive">
+      <Script id="locale-setter" strategy="afterInteractive">
         {`
           document.documentElement.lang = '${validLocale}';
           if ('${validLocale}' === 'ko') {
@@ -32,6 +37,6 @@ export default async function LocaleLayout({
       </Script>
       {children}
     </NextIntlClientProvider>
-  );
+  )
 }
 

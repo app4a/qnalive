@@ -11,8 +11,9 @@ const voteSchema = z.object({
 // POST /api/events/[eventId]/polls/[id]/vote - Submit vote
 export async function POST(
   req: NextRequest,
-  { params }: { params: { eventId: string; id: string } }
+  context: { params: Promise<{ eventId: string; id: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
     const body = await req.json()
@@ -195,8 +196,9 @@ export async function POST(
 // DELETE /api/events/[eventId]/polls/[id]/vote - Remove vote (unvote)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { eventId: string; id: string } }
+  context: { params: Promise<{ eventId: string; id: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
     const { searchParams } = new URL(req.url)

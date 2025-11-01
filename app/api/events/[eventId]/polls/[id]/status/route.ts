@@ -10,8 +10,9 @@ const statusSchema = z.object({
 // PATCH /api/events/[eventId]/polls/[id]/status - Activate/deactivate poll
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { eventId: string; id: string } }
+  context: { params: Promise<{ eventId: string; id: string }> }
 ) {
+  const { eventId, id } = await context.params
   try {
     const session = await auth()
 
@@ -23,7 +24,7 @@ export async function PATCH(
     }
 
     const event = await prisma.event.findUnique({
-      where: { id: params.eventId },
+      where: { id: eventId },
     })
 
     if (!event) {
@@ -45,7 +46,7 @@ export async function PATCH(
     const { isActive } = statusSchema.parse(body)
 
     const poll = await prisma.poll.update({
-      where: { id: params.id },
+      where: { id },
       data: { isActive },
       include: {
         options: {

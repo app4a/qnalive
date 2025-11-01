@@ -7,16 +7,17 @@ import { Link } from '@/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-export default async function EventAdminPage({ params }: { params: { locale: string; eventId: string } }) {
+export default async function EventAdminPage({ params }: { params: Promise<{ locale: string; eventId: string }> }) {
+  const { locale, eventId } = await params
   const session = await auth()
-  const t = await getTranslations({ locale: params.locale, namespace: 'events' })
+  const t = await getTranslations({ locale, namespace: 'events' })
 
   if (!session?.user) {
     redirect('/auth/signin')
   }
 
   const event = await prisma.event.findUnique({
-    where: { id: params.eventId },
+    where: { id: eventId },
     include: {
       _count: {
         select: {

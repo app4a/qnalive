@@ -12,8 +12,9 @@ const updateQuestionSchema = z.object({
 // PUT /api/events/[eventId]/questions/[id] - Update question (admin only)
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { eventId: string; id: string } }
+  context: { params: Promise<{ eventId: string; id: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
 
@@ -119,8 +120,9 @@ export async function PUT(
 // DELETE /api/events/[eventId]/questions/[id] - Delete question (admin, question author, or anonymous author)
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { eventId: string; id: string } }
+  context: { params: Promise<{ eventId: string; id: string }> }
 ) {
+  const params = await context.params
   try {
     const session = await auth()
     const { searchParams } = new URL(req.url)
